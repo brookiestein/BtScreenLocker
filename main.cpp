@@ -9,7 +9,8 @@
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
-    BluetoothListener listener;
+    ScreenLocker locker;
+    BluetoothListener listener(locker);
 
     if (argc > 1) {
         auto arg = QString(argv[1]);
@@ -31,8 +32,7 @@ int main(int argc, char *argv[])
         }
     }
 
-    ScreenLocker locker;
-    a.connect(&listener, &BluetoothListener::lock, &locker, &ScreenLocker::lockScreen);
+    a.connect(&listener, &BluetoothListener::lockScreen, &locker, &ScreenLocker::lockScreen);
 
     return a.exec();
 }

@@ -10,8 +10,9 @@
 
 #include "devicechooser.hpp"
 
-BluetoothListener::BluetoothListener(QObject *parent)
+BluetoothListener::BluetoothListener(ScreenLocker &screenLocker, QObject *parent)
     : QObject{parent}
+    , m_screenLocker(screenLocker)
 {
     if (not m_localDevice.isValid()) {
         auto reply = QMessageBox::question(nullptr,
@@ -25,10 +26,14 @@ BluetoothListener::BluetoothListener(QObject *parent)
         m_localDevice.powerOn();
     }
 
-    connect(&m_localDevice, &QBluetoothLocalDevice::hostModeStateChanged, this, &BluetoothListener::hostModeStateChanged);
+    m_lookForTrustedDeviceAgent = new QBluetoothDeviceDiscoveryAgent(this);
 
     m_deviceDiscoverTimer.setInterval(30'000); /* Discover devices for 30 seconds. */
+    m_lookForTrustedDeviceTimer.setInterval(10'000); /* Check if trusted device is near every 10 seconds. */
+
     connect(&m_deviceDiscoverTimer, &QTimer::timeout, this, &BluetoothListener::discoverDevicesTimeout);
+    connect(&m_lookForTrustedDeviceTimer, &QTimer::timeout, this, &BluetoothListener::checkForTrustedDevice);
+    connect(&m_localDevice, &QBluetoothLocalDevice::hostModeStateChanged, this, &BluetoothListener::hostModeStateChanged);
 
     auto filename = QString("%1%2%3%4%5.ini")
                         .arg(QStandardPaths::writableLocation(QStandardPaths::ConfigLocation),
@@ -40,8 +45,16 @@ BluetoothListener::BluetoothListener(QObject *parent)
 
     m_settings = new QSettings(filename, QSettings::IniFormat, this);
     m_settings->beginGroup("TrustedDevices");
+
     if (m_settings->allKeys().isEmpty()) {
         startDiscovery();
+    } else {
+        for (const auto deviceName : m_settings->allKeys()) {
+            auto address = QBluetoothAddress(m_settings->value(deviceName).toString());
+            m_trustedDevices.append(QBluetoothDeviceInfo(address, deviceName, 0));
+        }
+
+        checkForTrustedDevice(); /* Make call manually, then let timer call it automatically. */
     }
 }
 
@@ -99,4 +112,38 @@ void BluetoothListener::discoverDevicesTimeout()
     for (const auto &[name, address] : device) {
         m_settings->setValue(name, address);
     }
+}
+
+void BluetoothListener::checkForTrustedDeviceScanCompleted()
+{
+    m_lookForTrustedDeviceAgent->stop();
+
+    quint8 farDevices {};
+
+    for (const auto &discoveredDevice : m_lookForTrustedDeviceAgent->discoveredDevices()) {
+        for (const auto &trustedDevice : m_trustedDevices) {
+            if (discoveredDevice.address() != trustedDevice.address()) {
+                continue;
+            }
+
+            if (discoveredDevice.rssi() == 0) {
+                ++farDevices;
+            }
+        }
+    }
+
+    if (farDevices >= m_trustedDevices.size()) {
+        if (not m_screenLocker.isScreenLocked()) {
+            emit lockScreen();
+        }
+    }
+
+    m_lookForTrustedDeviceTimer.start();
+}
+
+void BluetoothListener::checkForTrustedDevice()
+{
+    m_lookForTrustedDeviceTimer.stop();
+    m_lookForTrustedDeviceAgent->start();
+    QTimer::singleShot(30'000, this, &BluetoothListener::checkForTrustedDeviceScanCompleted);
 }

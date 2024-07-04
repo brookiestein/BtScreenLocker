@@ -8,6 +8,8 @@
 #include <QSettings>
 #include <QTimer>
 
+#include "screenlocker.hpp"
+
 class BluetoothListener : public QObject
 {
     Q_OBJECT
@@ -16,16 +18,21 @@ class BluetoothListener : public QObject
     QBluetoothLocalDevice m_localDevice;
     QList<QBluetoothDeviceInfo> m_trustedDevices;
     QTimer m_deviceDiscoverTimer;
+    QTimer m_lookForTrustedDeviceTimer;
     QBluetoothDeviceDiscoveryAgent *m_discoveryAgent;
+    QBluetoothDeviceDiscoveryAgent *m_lookForTrustedDeviceAgent;
+    ScreenLocker &m_screenLocker;
 public:
-    explicit BluetoothListener(QObject *parent = nullptr);
+    explicit BluetoothListener(ScreenLocker &locker, QObject *parent = nullptr);
     ~BluetoothListener();
     void startDiscovery();
 signals:
-    void lock(); /* When this signal is emitted, ScreenLocker::lockScreen() should be called. */
+    void lockScreen(); /* When this signal is emitted, ScreenLocker::lockScreen() should be called. */
 private slots:
     void hostModeStateChanged(QBluetoothLocalDevice::HostMode state);
     void discoverDevicesTimeout();
+    void checkForTrustedDeviceScanCompleted();
+    void checkForTrustedDevice();
 };
 
 #endif // BLUETOOTHLISTENER_HPP
