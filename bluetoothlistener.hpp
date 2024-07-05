@@ -22,10 +22,14 @@ class BluetoothListener : public QObject
     QBluetoothDeviceDiscoveryAgent *m_discoveryAgent;
     QBluetoothDeviceDiscoveryAgent *m_lookForTrustedDeviceAgent;
     ScreenLocker &m_screenLocker;
+    bool m_debug;
+    bool m_verbose;
 public:
-    explicit BluetoothListener(ScreenLocker &locker, QObject *parent = nullptr);
+    explicit BluetoothListener(ScreenLocker &locker, bool verbose = false, bool debug = false, QObject *parent = nullptr);
     ~BluetoothListener();
     void startDiscovery();
+    void setDebug();
+    void setVerbose();
 signals:
     void lockScreen(); /* When this signal is emitted, ScreenLocker::lockScreen() should be called. */
 private slots:
@@ -33,6 +37,8 @@ private slots:
     void discoverDevicesTimeout();
     void checkForTrustedDeviceScanCompleted();
     void checkForTrustedDevice();
+public slots:
+    void screenActive();
 };
 
 #endif // BLUETOOTHLISTENER_HPP

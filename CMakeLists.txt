@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.14)
 
-project(BtScreenLocker VERSION 1.0.0 LANGUAGES CXX)
+project(BtScreenLocker VERSION 1.1.0 LANGUAGES CXX)
 
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
@@ -25,6 +25,8 @@ add_executable(BtScreenLocker
   devicechooser.hpp
   devicechooser.cpp
   devicechooser.ui
+  logger.hpp
+  logger.cpp
   screenlocker.hpp
   screenlocker.cpp
   ${TS_FILES}

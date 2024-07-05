@@ -17,6 +17,8 @@ public slots:
     void lockScreen();
 private slots:
     void screenChanged(const QDBusMessage &message);
+signals:
+    void screenActive();
 };
 
 #endif // SCREENLOCKER_HPP

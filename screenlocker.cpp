@@ -2,7 +2,6 @@
 
 #include <QDBusConnection>
 #include <QDBusMessage>
-#include <QDBusPendingReply>
 #include <QDebug>
 #include <QMessageBox>
 
@@ -46,5 +45,8 @@ void ScreenLocker::lockScreen()
 void ScreenLocker::screenChanged(const QDBusMessage &message)
 {
     m_screenLocked = message.arguments().at(0).toString() == "true" ? true : false;
+    if (not m_screenLocked) {
+        emit screenActive();
+    }
 }
 
