@@ -13,28 +13,37 @@
 
 BluetoothListener::BluetoothListener(ScreenLocker &screenLocker, bool verbose, bool debug, QObject *parent)
     : QObject{parent}
+    , m_dbusConnection(QDBusConnection::sessionBus())
     , m_screenLocker(screenLocker)
     , m_debug(debug)
     , m_verbose(verbose)
+    , m_stopped(false)
 {
-    if (not m_localDevice.isValid()) {
-        auto reply = QMessageBox::question(nullptr,
-                                           tr("Bluetooth is off"),
-                                           tr("For this program to work, you have to have bluetooth on\n"
-                                              "Would you like to turn it on?"));
-        if (reply != QMessageBox::Yes) {
-            std::exit(1);
-        }
+#ifdef QT_DEBUG
+    m_verbose = true;
+#endif
 
+    if (not m_localDevice.isValid()) {
+        auto message = tr("There isn't a valid Bluetooth device on this machine. Can't do anything.");
+        QMessageBox::critical(nullptr,
+                              tr("Error"),
+                              message);
+        Logger::log(message, Logger::FATAL, true, debug, Q_FUNC_INFO);
+    } else {
         m_localDevice.powerOn();
     }
 
-    m_lookForTrustedDeviceAgent = new QBluetoothDeviceDiscoveryAgent(this);
+    m_discoveryAgent = new QBluetoothDeviceDiscoveryAgent(this);
 
+    /*
+     * Use this timer both for discoverying new devices and for looking for already trusted devices.
+     * Pay attention where this object is connected to and disconnected from
+     * checkForTrustedDeviceScanCompleted and discoverDevicesTimeout
+     */
     m_deviceDiscoverTimer.setInterval(30'000); /* Discover devices for 30 seconds. */
     m_lookForTrustedDeviceTimer.setInterval(10'000); /* Check if trusted device is near every 10 seconds. */
 
-    connect(&m_deviceDiscoverTimer, &QTimer::timeout, this, &BluetoothListener::discoverDevicesTimeout);
+    connect(&m_deviceDiscoverTimer, &QTimer::timeout, this, &BluetoothListener::checkForTrustedDeviceScanCompleted);
     connect(&m_lookForTrustedDeviceTimer, &QTimer::timeout, this, &BluetoothListener::checkForTrustedDevice);
     connect(&m_localDevice, &QBluetoothLocalDevice::hostModeStateChanged, this, &BluetoothListener::hostModeStateChanged);
 
@@ -48,10 +57,19 @@ BluetoothListener::BluetoothListener(ScreenLocker &screenLocker, bool verbose, b
 
     m_settings = new QSettings(filename, QSettings::IniFormat, this);
     m_settings->beginGroup("TrustedDevices");
+}
 
+BluetoothListener::~BluetoothListener()
+{
+    m_settings->endGroup();
+}
+
+void BluetoothListener::start()
+{
     if (m_settings->allKeys().isEmpty()) {
         startDiscovery();
     } else {
+        m_trustedDevices.clear();
         for (const auto deviceName : m_settings->allKeys()) {
             auto address = QBluetoothAddress(m_settings->value(deviceName).toString());
             m_trustedDevices.append(QBluetoothDeviceInfo(address, deviceName, 0));
@@ -61,19 +79,16 @@ BluetoothListener::BluetoothListener(ScreenLocker &screenLocker, bool verbose, b
     }
 }
 
-BluetoothListener::~BluetoothListener()
-{
-    m_settings->endGroup();
-}
-
 void BluetoothListener::startDiscovery()
 {
+    disconnect(&m_deviceDiscoverTimer, &QTimer::timeout, this, &BluetoothListener::checkForTrustedDeviceScanCompleted);
+    connect(&m_deviceDiscoverTimer, &QTimer::timeout, this, &BluetoothListener::discoverDevicesTimeout);
+
     /* If constructor started it, but in main.cpp user started discovery. */
     m_lookForTrustedDeviceTimer.stop();
     Logger::log(tr("Discoverying devices..."), Logger::INFO, m_verbose, m_debug, Q_FUNC_INFO);
 
-    m_discoveryAgent = new QBluetoothDeviceDiscoveryAgent(this);
-    m_discoveryAgent->start(QBluetoothDeviceDiscoveryAgent::DiscoveryMethod::ClassicMethod);
+    m_discoveryAgent->start();
     m_deviceDiscoverTimer.start();
 
     QMessageBox::information(nullptr, tr("Discoverying devices"),
@@ -92,28 +107,13 @@ void BluetoothListener::setVerbose()
 
 void BluetoothListener::hostModeStateChanged(QBluetoothLocalDevice::HostMode state)
 {
-    bool poweredOff = state == QBluetoothLocalDevice::HostPoweredOff;
-    Logger::log(tr("Bluetooth device changed its status."),
-                poweredOff ? Logger::WARNING : Logger::INFO,
-                m_verbose, m_debug, Q_FUNC_INFO);
-
-    if (poweredOff) {
-        auto reply = QMessageBox::question(nullptr,
-                                           tr("Bluetooth is off"),
-                                           tr("For this program to work, you have to have bluetooth on\n"
-                                              "Would you like to turn it on?"));
-        if (reply != QMessageBox::Yes) {
-            Logger::log(
-                tr("Exiting because there's nothing else to do."),
-                Logger::WARNING, m_verbose, m_debug,
-                Q_FUNC_INFO
-            );
-
-            QMessageBox::critical(nullptr, tr("Quitting"), tr("Nothing else to do."));
-            std::exit(1);
-        }
-
-        m_localDevice.powerOn();
+    if (state == QBluetoothLocalDevice::HostPoweredOff) {
+        m_lookForTrustedDeviceTimer.stop();
+        m_deviceDiscoverTimer.stop();
+        auto message = tr("Bluetooth device: %1, %2 became unavailable. Can't do anything.")
+                           .arg(m_localDevice.name(), m_localDevice.address().toString());
+        QMessageBox::critical(nullptr, tr("Error"), message);
+        Logger::log(message, Logger::FATAL, true, m_debug, Q_FUNC_INFO);
     }
 }
 
@@ -126,6 +126,9 @@ void BluetoothListener::discoverDevicesTimeout()
     QEventLoop loop;
     DeviceChooser chooser;
     connect(&chooser, &DeviceChooser::closed, &loop, &QEventLoop::quit);
+
+    disconnect(&m_deviceDiscoverTimer, &QTimer::timeout, this, &BluetoothListener::discoverDevicesTimeout);
+    connect(&m_deviceDiscoverTimer, &QTimer::timeout, this, &BluetoothListener::checkForTrustedDeviceScanCompleted);
 
     for (const auto &device : m_discoveryAgent->discoveredDevices()) {
         if (device.rssi() == 0) { /* Paired devices will be shown even when they're not near. */
@@ -145,20 +148,38 @@ void BluetoothListener::discoverDevicesTimeout()
         m_settings->setValue(name, address);
     }
 
-    Logger::log(tr("Checking whether trusted devices are near..."),
-                Logger::INFO, m_verbose, m_debug, Q_FUNC_INFO);
-    m_lookForTrustedDeviceTimer.start();
+    if (m_settings->allKeys().isEmpty()) {
+        auto reply = QMessageBox::question(nullptr,
+                                           tr("Warning"),
+                                           tr("You haven't added any device to the trusted list.\n"
+                                              "Would you like to scan for devices again?"));
+        if (reply == QMessageBox::Yes) {
+            startDiscovery();
+            return;
+        }
+
+        QMessageBox::information(nullptr,
+                                 tr("Information"),
+                                 tr("No looking for trusted devices because there isn't any.\n"
+                                    "You can scan for devices again at any time by calling another instance "
+                                    "of this program with --scan-again without closing this one.")
+                                 );
+        return;
+    }
+
+    if (not m_lookForTrustedDeviceTimer.isActive() and not m_deviceDiscoverTimer.isActive()) {
+        start();
+    }
 }
 
 void BluetoothListener::checkForTrustedDeviceScanCompleted()
 {
-    Logger::log(tr("Scan for trusted devices finished."), Logger::INFO, m_verbose, m_debug, Q_FUNC_INFO);
-    m_lookForTrustedDeviceAgent->stop();
+    m_discoveryAgent->stop();
 
     QStringList nearDevices;
     quint8 farDevices {};
 
-    for (const auto &discoveredDevice : m_lookForTrustedDeviceAgent->discoveredDevices()) {
+    for (const auto &discoveredDevice : m_discoveryAgent->discoveredDevices()) {
         for (const auto &trustedDevice : m_trustedDevices) {
             if (discoveredDevice.address() != trustedDevice.address()) {
                 continue;
@@ -202,12 +223,50 @@ void BluetoothListener::checkForTrustedDevice()
 {
     Logger::log(tr("Checking whether trusted devices are near..."),
                 Logger::INFO, m_verbose, m_debug, Q_FUNC_INFO);
+
     m_lookForTrustedDeviceTimer.stop();
-    m_lookForTrustedDeviceAgent->start();
-    QTimer::singleShot(30'000, this, &BluetoothListener::checkForTrustedDeviceScanCompleted);
+    m_discoveryAgent->start();
+    m_deviceDiscoverTimer.start();
 }
 
 void BluetoothListener::screenActive()
 {
     m_lookForTrustedDeviceTimer.start();
+}
+
+void BluetoothListener::pause()
+{
+    if (m_stopped) {
+        Logger::log(tr("Looking for trusted devices is already stopped, ignoring message."),
+                    Logger::INFO, m_verbose, m_debug, Q_FUNC_INFO);
+        return;
+    }
+
+    Logger::log(tr("Looking for trusted devices stopped by D-Bus signal telling me so."),
+                Logger::INFO, m_verbose, m_debug, Q_FUNC_INFO);
+    m_lookForTrustedDeviceTimer.stop();
+    m_deviceDiscoverTimer.stop();
+    m_discoveryAgent->stop();
+    m_stopped = true;
+}
+
+void BluetoothListener::resume()
+{
+    if (not m_stopped) {
+        Logger::log(tr("Looking for trusted devices isn't stopped, ignoring message."),
+                    Logger::INFO, m_verbose, m_debug, Q_FUNC_INFO);
+        return;
+    }
+
+    Logger::log(tr("Looking for trusted devices again."),
+                Logger::INFO, m_verbose, m_debug, Q_FUNC_INFO);
+    m_lookForTrustedDeviceTimer.start();
+    m_stopped = false;
+}
+
+void BluetoothListener::scanAgain()
+{
+    Logger::log(tr("Discoverying device started by D-Bus signal telling me so."),
+                Logger::INFO, m_verbose, m_debug, Q_FUNC_INFO);
+    startDiscovery();
 }

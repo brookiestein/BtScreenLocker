@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=BtScreenLocker
+Exec=/usr/local/bin/BtScreenLocker
+Type=Application
+Categories=Utility;
+Icon=/usr/local/share/BtScreenLocker/assets/icon.png
+Comment=Daemon to lock your screen when your Bluetooth trusted devices go away.
+Terminal=false
+StartupNotify=true
