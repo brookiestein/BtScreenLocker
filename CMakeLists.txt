@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.28)
 
-project(BtScreenLocker VERSION 1.2.0 LANGUAGES CXX)
+project(BtScreenLocker VERSION 1.3.0 LANGUAGES CXX)
 
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
@@ -31,6 +31,7 @@ set(PROJECT_SOURCES
     logger.cpp
     screenlocker.hpp
     screenlocker.cpp
+    resources.qrc
     ${TS_FILES}
 )
 
@@ -60,7 +61,7 @@ else()
     endif()
 endif()
 
-target_link_libraries(BtScreenLocker
+target_link_libraries(BtScreenLocker PRIVATE
     Qt${QT_VERSION_MAJOR}::Bluetooth
     Qt${QT_VERSION_MAJOR}::Core
     Qt${QT_VERSION_MAJOR}::DBus
@@ -81,8 +82,10 @@ install(TARGETS BtScreenLocker
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
-install(FILES ${QM_FILES} DESTINATION ${CMAKE_INSTALL_BINDIR}/translations)
+install(FILES ${QM_FILES} DESTINATION ${CMAKE_INSTALL_PREFIX}/share/${PROJECT_NAME}/resources/translations)
+install(FILES BtScreenLocker.desktop DESTINATION ${CMAKE_INSTALL_PREFIX}/share/applications)
+install(DIRECTORY assets DESTINATION ${CMAKE_INSTALL_PREFIX}/share/${PROJECT_NAME}/resources)
 
-if(QT_VERSION_MAJOR EQUAL 6)
+if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_finalize_executable(BtScreenLocker)
 endif()

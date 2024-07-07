@@ -36,6 +36,7 @@ public:
     void setVerbose();
 signals:
     void lockScreen(); /* When this signal is emitted, ScreenLocker::lockScreen() should be called. */
+    void quit();
 private slots:
     void hostModeStateChanged(QBluetoothLocalDevice::HostMode state);
     void discoverDevicesTimeout();
@@ -46,6 +47,7 @@ public slots:
     Q_SCRIPTABLE void pause(); /* To pause looking for trusted devices and locking the screen without closing the program. */
     Q_SCRIPTABLE void resume(); /* Opposite */
     Q_SCRIPTABLE void scanAgain();
+    Q_SCRIPTABLE void kill();
 };
 
 #endif // BLUETOOTHLISTENER_HPP

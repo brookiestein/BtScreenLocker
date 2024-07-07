@@ -74,37 +74,47 @@ Puedes escanear los dispositivos de nuevo en cualquier momento ejecutando otra i
         <translation>Bloqueando la pantalla porque todos los dispositivos de confianza están lejos.</translation>
     </message>
     <message>
-        <location filename="../bluetoothlistener.cpp" line="215"/>
-        <source>Not locking screen because the following trusted devices are near: %1</source>
-        <translation>No se bloqueará la pantalla porque los siguientes dispositivos de confianza están cerca: %1</translation>
+        <location filename="../bluetoothlistener.cpp" line="217"/>
+        <source>Not locking screen because the following trusted devices are near:
+%1</source>
+        <translation>No se bloqueará la pantalla porque los siguientes dispositivos de confianza están cerca:\n%1</translation>
     </message>
     <message>
-        <location filename="../bluetoothlistener.cpp" line="224"/>
+        <location filename="../bluetoothlistener.cpp" line="278"/>
+        <source>Quitting because of D-Bus signal telling me so...</source>
+        <translation>Saliendo por señal D-Bus pidiéndomelo...</translation>
+    </message>
+    <message>
+        <source>Not locking screen because the following trusted devices are near: %1</source>
+        <translation type="vanished">No se bloqueará la pantalla porque los siguientes dispositivos de confianza están cerca: %1</translation>
+    </message>
+    <message>
+        <location filename="../bluetoothlistener.cpp" line="226"/>
         <source>Checking whether trusted devices are near...</source>
         <translation>Verificando si hay dispositivos de confianza cerca...</translation>
     </message>
     <message>
-        <location filename="../bluetoothlistener.cpp" line="240"/>
+        <location filename="../bluetoothlistener.cpp" line="242"/>
         <source>Looking for trusted devices is already stopped, ignoring message.</source>
         <translation>Buscar dispositivos de confianza ya está detenido, ignorando mensaje.</translation>
     </message>
     <message>
-        <location filename="../bluetoothlistener.cpp" line="245"/>
+        <location filename="../bluetoothlistener.cpp" line="247"/>
         <source>Looking for trusted devices stopped by D-Bus signal telling me so.</source>
         <translation>Buscar dispositivos de confianza detenido por orden de la señal D-Bus recibida.</translation>
     </message>
     <message>
-        <location filename="../bluetoothlistener.cpp" line="256"/>
+        <location filename="../bluetoothlistener.cpp" line="258"/>
         <source>Looking for trusted devices isn&apos;t stopped, ignoring message.</source>
         <translation>Buscar dispositivos de confianza no está detenido, ignorando mensaje.</translation>
     </message>
     <message>
-        <location filename="../bluetoothlistener.cpp" line="261"/>
+        <location filename="../bluetoothlistener.cpp" line="263"/>
         <source>Looking for trusted devices again.</source>
         <translation>Buscando dispositivos de confianza de nuevo.</translation>
     </message>
     <message>
-        <location filename="../bluetoothlistener.cpp" line="269"/>
+        <location filename="../bluetoothlistener.cpp" line="271"/>
         <source>Discoverying device started by D-Bus signal telling me so.</source>
         <translation>Escanear dispositivos iniciado por la señal D-Bus recibida.</translation>
     </message>
@@ -112,18 +122,18 @@ Puedes escanear los dispositivos de nuevo en cualquier momento ejecutando otra i
 <context>
     <name>DeviceChooser</name>
     <message>
-        <location filename="../devicechooser.ui" line="14"/>
-        <location filename="../build/Desktop-Debug/BtScreenLocker_autogen/include/ui_devicechooser.h" line="61"/>
         <source>Form</source>
-        <translation>Dispositivos Encontrados</translation>
+        <translation type="vanished">Dispositivos Encontrados</translation>
     </message>
     <message>
-        <location filename="../devicechooser.ui" line="22"/>
-        <location filename="../build/Desktop-Debug/BtScreenLocker_autogen/include/ui_devicechooser.h" line="62"/>
+        <location filename="../devicechooser.ui" line="26"/>
+        <location filename="../build/Desktop-Debug/BtScreenLocker_autogen/include/ui_devicechooser.h" line="66"/>
         <source>Choose your Device</source>
         <translation>Selecciona tu Dispositivo</translation>
     </message>
     <message>
+        <location filename="../devicechooser.ui" line="14"/>
+        <location filename="../build/Desktop-Debug/BtScreenLocker_autogen/include/ui_devicechooser.h" line="65"/>
         <location filename="../devicechooser.cpp" line="9"/>
         <source>Discovered Devices</source>
         <translation>Dispositivos Encontrados</translation>
@@ -147,22 +157,37 @@ Puedes escanear los dispositivos de nuevo en cualquier momento ejecutando otra i
 <context>
     <name>QObject</name>
     <message>
-        <location filename="../main.cpp" line="63"/>
+        <location filename="../main.cpp" line="26"/>
+        <source>Using language: %1</source>
+        <translation>Usando idioma: %1</translation>
+    </message>
+    <message>
+        <location filename="../main.cpp" line="62"/>
+        <source>Sending kill signal...</source>
+        <translation>Enviando señal para terminar...</translation>
+    </message>
+    <message>
+        <location filename="../main.cpp" line="67"/>
         <source>Sending pause signal...</source>
         <translation>Enviando señal para pausar...</translation>
     </message>
     <message>
-        <location filename="../main.cpp" line="68"/>
+        <location filename="../main.cpp" line="72"/>
         <source>Sending resume signal...</source>
         <translation>Enviando señal para resumir...</translation>
     </message>
     <message>
-        <location filename="../main.cpp" line="73"/>
+        <location filename="../main.cpp" line="77"/>
         <source>Sending startAgain signal...</source>
         <translation>Enviando señal para escanear de nuevo...</translation>
     </message>
     <message>
-        <location filename="../main.cpp" line="120"/>
+        <location filename="../main.cpp" line="97"/>
+        <source>Using default language: English.</source>
+        <translation>Usando idioma por defecto: Inglés.</translation>
+    </message>
+    <message>
+        <location filename="../main.cpp" line="133"/>
         <source>Couldn&apos;t register D-Bus service. Won&apos;t be able to respond to IPC messages.
 Error message: %1</source>
         <translation>No se pudo registrar el servicio D-BUS. No será posible responder a mensajes IPC.\n

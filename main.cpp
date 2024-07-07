@@ -22,7 +22,8 @@ int main(int argc, char *argv[])
     const QStringList uiLanguages = QLocale::system().uiLanguages();
     for (const QString &locale : uiLanguages) {
         const QString baseName = "BtScreenLocker_" + QLocale(locale).name();
-        if (translator.load(":/i18n/" + baseName)) {
+        if (translator.load(":/translations/" + baseName)) {
+            Logger::log(QObject::tr("Using language: %1").arg(baseName));
             a.installTranslator(&translator);
             break;
         }
@@ -32,6 +33,7 @@ int main(int argc, char *argv[])
         { "debug",      no_argument,    0,  'D' },
         { "discover",   no_argument,    0,  'd' },
         { "help",       no_argument,    0,  'h' },
+        { "kill",       no_argument,    0,  'k' },
         { "pause",      no_argument,    0,  'p' },
         { "resume",     no_argument,    0,  'r' },
         { "scan-again", no_argument,    0,  's' },
@@ -44,7 +46,7 @@ int main(int argc, char *argv[])
     bool discover {false};
     bool verbose {false};
     int option = 0;
-    while ((option = getopt_long(argc, argv, "DdhprsvV", longOptions, nullptr)) >= 0) {
+    while ((option = getopt_long(argc, argv, "DdhkprsvV", longOptions, nullptr)) >= 0) {
         switch (option)
         {
         case 'D':
@@ -55,6 +57,11 @@ int main(int argc, char *argv[])
             break;
         case 'h':
             usage(argv[0]);
+            return 0;
+        case 'k':
+            Logger::log(QObject::tr("Sending kill signal..."), Logger::INFO, verbose, debug, Q_FUNC_INFO);
+            QDBusConnection::sessionBus()
+                .send(QDBusMessage::createMethodCall(SERVICE_NAME, "/Listen", "", "kill"));
             return 0;
         case 'p':
             Logger::log(QObject::tr("Sending pause signal..."), Logger::INFO, verbose, debug, Q_FUNC_INFO);
@@ -82,9 +89,18 @@ int main(int argc, char *argv[])
         }
     }
 
+#ifdef QT_DEBUG
+    verbose = true;
+#endif
+
+    if (translator.language().isEmpty()) {
+        Logger::log(QObject::tr("Using default language: English."), Logger::INFO, verbose, debug, Q_FUNC_INFO);
+    }
+
     ScreenLocker locker;
     BluetoothListener listener(locker);
     a.connect(&listener, &BluetoothListener::lockScreen, &locker, &ScreenLocker::lockScreen);
+    a.connect(&listener, &BluetoothListener::quit, &a, &QApplication::quit);
     /* When screen is locked, no scan is done.
      * Connect to this signal to start scanning when screen is unlocked again.
      */
@@ -137,6 +153,10 @@ void usage(const char *programName)
     qInfo() << "--help"
             << "\t\t" << '|' << "-h" << '\t'
             << "Show this help.";
+
+    qInfo().noquote() << "--kill"
+            << "\t\t" << '|' << "-k" << '\t'
+            << "End an existing" << programName << "instance.";
 
     qInfo().noquote() << "--pause"
                       << '\t' << '|' << "-p" << '\t'

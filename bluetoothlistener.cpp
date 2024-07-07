@@ -70,7 +70,7 @@ void BluetoothListener::start()
         startDiscovery();
     } else {
         m_trustedDevices.clear();
-        for (const auto deviceName : m_settings->allKeys()) {
+        for (const auto &deviceName : m_settings->allKeys()) {
             auto address = QBluetoothAddress(m_settings->value(deviceName).toString());
             m_trustedDevices.append(QBluetoothDeviceInfo(address, deviceName, 0));
         }
@@ -207,12 +207,14 @@ void BluetoothListener::checkForTrustedDeviceScanCompleted()
 
     QString devices;
     for (int i {}; i < nearDevices.size(); ++i) {
-        devices += nearDevices[i];
-        devices += i < nearDevices.size() - 1 ? ", " : "";
+        devices += QString("%1. %2%3")
+                       .arg(QString::number(i + 1),
+                            nearDevices[i],
+                            i < nearDevices.size() - 1 ? ", " : "");
     }
 
     Logger::log(
-        tr("Not locking screen because the following trusted devices are near: %1").arg(devices),
+        tr("Not locking screen because the following trusted devices are near:\n%1").arg(devices),
         Logger::INFO, m_verbose, m_debug, Q_FUNC_INFO
     );
 
@@ -269,4 +271,11 @@ void BluetoothListener::scanAgain()
     Logger::log(tr("Discoverying device started by D-Bus signal telling me so."),
                 Logger::INFO, m_verbose, m_debug, Q_FUNC_INFO);
     startDiscovery();
+}
+
+void BluetoothListener::kill()
+{
+    Logger::log(tr("Quitting because of D-Bus signal telling me so..."),
+                Logger::INFO, m_verbose, m_debug, Q_FUNC_INFO);
+    emit quit();
 }

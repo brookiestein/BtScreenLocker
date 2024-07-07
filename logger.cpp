@@ -19,6 +19,7 @@ void Logger::log(const QString &message, TYPE type, bool verbose, bool debug, co
     case WARNING:
         if (verbose or debug)
             qWarning().noquote() << formattedMessage;
+        break;
     case ERROR:
         qCritical().noquote() << formattedMessage;
         break;
