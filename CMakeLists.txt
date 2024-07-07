@@ -31,9 +31,11 @@ set(PROJECT_SOURCES
     logger.cpp
     screenlocker.hpp
     screenlocker.cpp
-    resources.qrc
-    ${TS_FILES}
+    # Because we prepend src/ to this CMake variable, but they're in the project root directory.
+    ../resources.qrc
 )
+
+list(TRANSFORM PROJECT_SOURCES PREPEND "src/")
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(BtScreenLocker
@@ -82,9 +84,9 @@ install(TARGETS BtScreenLocker
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
+install(FILES resources/BtScreenLocker.desktop DESTINATION ${CMAKE_INSTALL_PREFIX}/share/applications)
 install(FILES ${QM_FILES} DESTINATION ${CMAKE_INSTALL_PREFIX}/share/${PROJECT_NAME}/resources/translations)
-install(FILES BtScreenLocker.desktop DESTINATION ${CMAKE_INSTALL_PREFIX}/share/applications)
-install(DIRECTORY assets DESTINATION ${CMAKE_INSTALL_PREFIX}/share/${PROJECT_NAME}/resources)
+install(DIRECTORY resources/assets DESTINATION ${CMAKE_INSTALL_PREFIX}/share/${PROJECT_NAME}/resources)
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_finalize_executable(BtScreenLocker)
