@@ -1,7 +1,6 @@
 <RCC>
     <qresource prefix="/">
         <file>translations/BtScreenLocker_es_US.ts</file>
-        <file>translations/BtScreenLocker_es_US.qm</file>
         <file>resources/assets/icon.png</file>
     </qresource>
 </RCC>

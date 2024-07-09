@@ -85,7 +85,7 @@ int main(int argc, char *argv[])
             qInfo() << PROJECT_NAME << "version" << PROJECT_VERSION;
             return 0;
         default:
-            qCritical() << a.tr("Unknown option:") << optopt;
+            Logger::log(QObject::tr("Unknown option: %1").arg(optopt), Logger::ERROR, verbose, debug, Q_FUNC_INFO);
         }
     }
 

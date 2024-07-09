@@ -10,7 +10,8 @@ DeviceChooser::DeviceChooser(QWidget *parent)
 
     configTable();
 
-    connect(m_ui->tableWidget, &QTableWidget::cellDoubleClicked, this, &DeviceChooser::deviceClicked);
+    connect(m_ui->tableWidget, &QTableWidget::cellDoubleClicked, this, &DeviceChooser::onCellDoubleClicked);
+    connect(m_ui->addButton, &QPushButton::clicked, this, &DeviceChooser::onAddButtonClicked);
 }
 
 DeviceChooser::~DeviceChooser()
@@ -36,21 +37,35 @@ void DeviceChooser::configTable()
     headers << tr("Name") << tr("MAC Address") << tr("Signal strength");
 
     m_ui->tableWidget->setColumnCount(headers.size());
-    m_ui->tableWidget->setSelectionMode(QAbstractItemView::SingleSelection);
+    m_ui->tableWidget->setSelectionMode(QAbstractItemView::MultiSelection);
     m_ui->tableWidget->setSelectionBehavior(QAbstractItemView::SelectItems);
     m_ui->tableWidget->setEditTriggers(QTableWidget::NoEditTriggers);
     m_ui->tableWidget->setHorizontalHeaderLabels(headers);
 }
 
-void DeviceChooser::deviceClicked(int row, int column)
+void DeviceChooser::onCellDoubleClicked(int row, int column)
 {
     auto name = m_ui->tableWidget->item(row, 0)->text();
     auto address = m_ui->tableWidget->item(row, 1)->text();
-    m_selectedDevice[name] = address;
+    m_selectedDevices[name] = address;
     close();
 }
 
-void DeviceChooser::addDevice(const QString &name, const QString &address, const QString rssi)
+void DeviceChooser::onAddButtonClicked()
+{
+    for (const auto *item : m_ui->tableWidget->selectedItems()) {
+        int row = m_ui->tableWidget->row(item);
+        auto name = m_ui->tableWidget->item(row, 0)->text();
+        auto address = m_ui->tableWidget->item(row, 1)->text();
+        m_selectedDevices[name] = address;
+    }
+
+    close();
+}
+
+void DeviceChooser::addDevice(const QString &name,
+                              const QString &address,
+                              const QString &rssi)
 {
     int rowCount = m_ui->tableWidget->rowCount();
     m_ui->tableWidget->insertRow(rowCount);
@@ -59,7 +74,7 @@ void DeviceChooser::addDevice(const QString &name, const QString &address, const
     m_ui->tableWidget->setItem(rowCount, 2, new QTableWidgetItem(rssi));
 }
 
-std::map<QString, QString> DeviceChooser::selectedDevice()
+std::map<QString, QString> DeviceChooser::selectedDevices()
 {
-    return m_selectedDevice;
+    return m_selectedDevices;
 }

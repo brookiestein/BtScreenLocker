@@ -14,21 +14,22 @@ class DeviceChooser : public QWidget
 {
     Q_OBJECT
     Ui::DeviceChooser *m_ui;
-    std::map<QString, QString> m_selectedDevice;
+    std::map<QString, QString> m_selectedDevices;
 
     void configTable();
 public:
     explicit DeviceChooser(QWidget *parent = nullptr);
     ~DeviceChooser();
-    void addDevice(const QString &name, const QString &address, const QString rssi);
-    std::map<QString, QString> selectedDevice();
+    void addDevice(const QString &name, const QString &address, const QString &rssi);
+    std::map<QString, QString> selectedDevices();
 protected:
     void closeEvent(QCloseEvent *event);
     void showEvent(QShowEvent *event);
 signals:
     void closed();
 private slots:
-    void deviceClicked(int row, int column);
+    void onCellDoubleClicked(int row, int column);
+    void onAddButtonClicked();
 };
 
 #endif // DEVICECHOOSER_HPP

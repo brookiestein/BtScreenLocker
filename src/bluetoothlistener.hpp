@@ -1,11 +1,14 @@
 #ifndef BLUETOOTHLISTENER_HPP
 #define BLUETOOTHLISTENER_HPP
 
+#include <map>
 #include <QBluetoothDeviceInfo>
 #include <QBluetoothDeviceDiscoveryAgent>
 #include <QBluetoothLocalDevice>
+#include <QBluetoothSocket>
 #include <QObject>
 #include <QSettings>
+#include <QSharedPointer>
 #include <QTimer>
 
 #include "screenlocker.hpp"
@@ -18,7 +21,7 @@ class BluetoothListener : public QObject
     QDBusConnection m_dbusConnection;
     QSettings *m_settings;
     QBluetoothLocalDevice m_localDevice;
-    QList<QBluetoothDeviceInfo> m_trustedDevices;
+    std::map<QSharedPointer<QBluetoothDeviceInfo>, QBluetoothSocket *> m_trustedDevices;
     QTimer m_deviceDiscoverTimer;
     QTimer m_lookForTrustedDeviceTimer;
     QBluetoothDeviceDiscoveryAgent *m_discoveryAgent;
@@ -27,6 +30,7 @@ class BluetoothListener : public QObject
     bool m_verbose;
     bool m_stopped;
 
+    QString deviceClassToString(const QBluetoothDeviceInfo &deviceInfo);
 public:
     explicit BluetoothListener(ScreenLocker &locker, bool verbose = false, bool debug = false, QObject *parent = nullptr);
     ~BluetoothListener();

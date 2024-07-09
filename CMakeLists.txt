@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.28)
 
-project(BtScreenLocker VERSION 1.3.0 LANGUAGES CXX)
+project(BtScreenLocker VERSION 1.3.1 LANGUAGES CXX)
 
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
@@ -21,7 +21,6 @@ list(TRANSFORM TS_FILES PREPEND "translations/")
 qt_create_translation(QM_FILES ${CMAKE_SOURCE_DIR} ${TS_FILES})
 
 set(PROJECT_SOURCES
-    main.cpp
     bluetoothlistener.hpp
     bluetoothlistener.cpp
     devicechooser.hpp
@@ -29,6 +28,7 @@ set(PROJECT_SOURCES
     devicechooser.ui
     logger.hpp
     logger.cpp
+    main.cpp
     screenlocker.hpp
     screenlocker.cpp
     # Because we prepend src/ to this CMake variable, but they're in the project root directory.

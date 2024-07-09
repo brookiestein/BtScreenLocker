@@ -1,6 +1,7 @@
 #include "bluetoothlistener.hpp"
 
 #include <QBluetoothDeviceDiscoveryAgent>
+#include <QBluetoothSocket>
 #include <QDebug>
 #include <QDir>
 #include <QEventLoop>
@@ -68,15 +69,19 @@ void BluetoothListener::start()
 {
     if (m_settings->allKeys().isEmpty()) {
         startDiscovery();
-    } else {
-        m_trustedDevices.clear();
-        for (const auto &deviceName : m_settings->allKeys()) {
-            auto address = QBluetoothAddress(m_settings->value(deviceName).toString());
-            m_trustedDevices.append(QBluetoothDeviceInfo(address, deviceName, 0));
-        }
-
-        m_lookForTrustedDeviceTimer.start();
+        return;
     }
+
+    m_trustedDevices.clear();
+    for (const auto &deviceName : m_settings->allKeys()) {
+        auto address = QBluetoothAddress(m_settings->value(deviceName).toString());
+        auto deviceInfo = QSharedPointer<QBluetoothDeviceInfo>(new QBluetoothDeviceInfo(address, deviceName, 0));
+        auto *socket = new QBluetoothSocket(QBluetoothServiceInfo::RfcommProtocol, this);
+
+        m_trustedDevices[deviceInfo] = socket;
+    }
+
+    m_lookForTrustedDeviceTimer.start();
 }
 
 void BluetoothListener::startDiscovery()
@@ -110,10 +115,13 @@ void BluetoothListener::hostModeStateChanged(QBluetoothLocalDevice::HostMode sta
     if (state == QBluetoothLocalDevice::HostPoweredOff) {
         m_lookForTrustedDeviceTimer.stop();
         m_deviceDiscoverTimer.stop();
-        auto message = tr("Bluetooth device: %1, %2 became unavailable. Can't do anything.")
-                           .arg(m_localDevice.name(), m_localDevice.address().toString());
+        auto message = tr("Bluetooth device: %1, %2 became unavailable.\n"
+                          "Ending program execution because of this!\n\n"
+                          "If at some point the device: %3 becomes available again, please re-run me.")
+                           .arg(m_localDevice.name(), m_localDevice.address().toString(), m_localDevice.name());
         QMessageBox::critical(nullptr, tr("Error"), message);
-        Logger::log(message, Logger::FATAL, true, m_debug, Q_FUNC_INFO);
+        Logger::log(message, Logger::ERROR, true, m_debug, Q_FUNC_INFO);
+        emit quit();
     }
 }
 
@@ -141,11 +149,13 @@ void BluetoothListener::discoverDevicesTimeout()
     chooser.show();
     loop.exec();
 
-    auto device = chooser.selectedDevice();
-    for (const auto &[name, address] : device) {
+    auto devicesInfo = chooser.selectedDevices();
+    for (const auto &[name, address] : devicesInfo) {
         Logger::log(tr("Adding device %1 to the trusted devices list...").arg(name),
                     Logger::INFO, m_verbose, m_debug, Q_FUNC_INFO);
+
         m_settings->setValue(name, address);
+
     }
 
     if (m_settings->allKeys().isEmpty()) {
@@ -180,8 +190,8 @@ void BluetoothListener::checkForTrustedDeviceScanCompleted()
     quint8 farDevices {};
 
     for (const auto &discoveredDevice : m_discoveryAgent->discoveredDevices()) {
-        for (const auto &trustedDevice : m_trustedDevices) {
-            if (discoveredDevice.address() != trustedDevice.address()) {
+        for (auto it = m_trustedDevices.begin(); it != m_trustedDevices.end(); ++it) {
+            if (discoveredDevice.address() != it->first->address()) {
                 continue;
             }
 
