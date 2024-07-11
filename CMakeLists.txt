@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 3.28)
 
-project(BtScreenLocker VERSION 1.4.0 LANGUAGES CXX)
+project(BtScreenLocker
+    VERSION 1.5.0
+    LANGUAGES CXX
+    DESCRIPTION "Daemon to lock your screen if trusted Bluetooth devices go away."
+)
 
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
@@ -11,6 +15,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_compile_definitions(PROJECT_NAME="${PROJECT_NAME}")
 add_compile_definitions(PROJECT_VERSION="${PROJECT_VERSION}")
+add_compile_definitions(PROJECT_DESCRIPTION="${PROJECT_DESCRIPTION}")
 add_compile_definitions(SERVICE_NAME="com.github.brookiestein.BluetoothListener")
 
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Bluetooth Core LinguistTools Widgets DBus)

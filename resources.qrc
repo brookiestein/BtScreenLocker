@@ -2,5 +2,6 @@
     <qresource prefix="/">
         <file>translations/BtScreenLocker_es_US.ts</file>
         <file>resources/assets/icon.png</file>
+        <file>translations/BtScreenLocker_es_US.qm</file>
     </qresource>
 </RCC>

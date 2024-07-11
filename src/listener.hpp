@@ -10,6 +10,7 @@
 #include <QTimer>
 #include <QThread>
 
+#include "logger.hpp"
 #include "screenlocker.hpp"
 
 class Listener : public QObject
@@ -26,18 +27,15 @@ class Listener : public QObject
     QSharedPointer<QBluetoothDeviceDiscoveryAgent> m_discoveryAgent;
     QSharedPointer<QThread> connectionThread;
     ScreenLocker &m_screenLocker;
-    bool m_debug;
-    bool m_verbose;
+    Logger &m_logger;
     bool m_stopped;
 
     QString deviceClassToString(const QBluetoothDeviceInfo &deviceInfo);
 public:
-    explicit Listener(ScreenLocker &locker, bool verbose = false, bool debug = false, QObject *parent = nullptr);
+    explicit Listener(ScreenLocker &locker, Logger &logger, QObject *parent = nullptr);
     ~Listener();
     void start();
     void startDiscovery();
-    void setDebug();
-    void setVerbose();
 signals:
     void lockScreen(); /* When this signal is emitted, ScreenLocker::lockScreen() should be called. */
     void quit();

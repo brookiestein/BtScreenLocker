@@ -94,5 +94,5 @@ Both if you added a new Bluetooth device to the trusted list as if you didn't, B
 | --pause      | -p            | Pause an already running BtScreenLocker instance.                           |
 | --resume     | -r            | Resume an already running and paused BtScreenLocker instance.               |
 | --scan-again | -s            | Same as --discover, but for an already running BtScreenLocker instance.     |
-| --verbose    | -v            | Enable verbose log.                                                         |
-| --version    | -V            | Show this program version.                                                  |
+| --verbose    | -V            | Enable verbose log.                                                         |
+| --version    | -v            | Show this program version.                                                  |

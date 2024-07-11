@@ -95,5 +95,5 @@ Tanto si agregaste un nuevo dispositivo Bluetooth de confianza como si no, BtScr
 | --pause      | -p            | Pausa una instancia de BtScreenLocker que ya esté corriendo.                                |
 | --resume     | -r            | Resume una instancia de BtScreenLocker que ya esté corriendo.                               |
 | --scan-again | -s            | Igual que --discover, pero para una instancia de BtScreenLocker que ya esté corriendo.      |
-| --verbose    | -v            | Activa el registro en modo verboso.                                                         |
-| --version    | -V            | Muestra la versión de este programa.                                                        |
+| --verbose    | -V            | Activa el registro en modo verboso.                                                         |
+| --version    | -v            | Muestra la versión de este programa.                                                        |

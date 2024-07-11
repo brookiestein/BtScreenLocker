@@ -1,104 +1,81 @@
 #include <QApplication>
+#include <QCommandLineOption>
+#include <QCommandLineParser>
 #include <QDBusConnection>
 #include <QDebug>
 #include <QLocale>
 #include <QTranslator>
 
-#include <getopt.h>
-
 #include "listener.hpp"
 #include "logger.hpp"
 #include "screenlocker.hpp"
 
-void registerDBusService(Listener &listener, bool debug);
+QList<QCommandLineOption> commandLineOptions(const char *name);
+void setAppLanguage(QApplication &a, const QString &language, Logger &logger);
+void registerDBusService(Listener &listener, Logger &logger);
 void usage(const char *programName);
 
 int main(int argc, char *argv[])
 {
+    QApplication::setApplicationName(PROJECT_NAME);
+    QApplication::setApplicationVersion(PROJECT_VERSION);
     QApplication a(argc, argv);
     a.setQuitOnLastWindowClosed(false);
 
-    QTranslator translator;
-    const QStringList uiLanguages = QLocale::system().uiLanguages();
-    for (const QString &locale : uiLanguages) {
-        const QString baseName = "BtScreenLocker_" + QLocale(locale).name();
-        if (translator.load(":/translations/" + baseName)) {
-            Logger::log(QObject::tr("Using language: %1").arg(baseName));
-            a.installTranslator(&translator);
-            break;
-        }
-    }
+    QCommandLineParser parser;
+    parser.setApplicationDescription(PROJECT_DESCRIPTION);
+    parser.addHelpOption();
+    parser.addVersionOption();
+    parser.addOptions(commandLineOptions(argv[0]));
+    parser.process(a);
 
-    const struct option longOptions[] = {
-        { "debug",      no_argument,    0,  'D' },
-        { "discover",   no_argument,    0,  'd' },
-        { "help",       no_argument,    0,  'h' },
-        { "kill",       no_argument,    0,  'k' },
-        { "pause",      no_argument,    0,  'p' },
-        { "resume",     no_argument,    0,  'r' },
-        { "scan-again", no_argument,    0,  's' },
-        { "verbose",    no_argument,    0,  'v' },
-        { "version",    no_argument,    0,  'V' },
-        { nullptr, 0, nullptr, 0 }
-    };
-
-    bool debug {false};
-    bool discover {false};
-    bool verbose {false};
-    int option = 0;
-    while ((option = getopt_long(argc, argv, "DdhkprsvV", longOptions, nullptr)) >= 0) {
-        switch (option)
-        {
-        case 'D':
-            debug = true;
-            break;
-        case 'd':
-            discover = true;
-            break;
-        case 'h':
-            usage(argv[0]);
-            return 0;
-        case 'k':
-            Logger::log(QObject::tr("Sending kill signal..."), Logger::INFO, verbose, debug, Q_FUNC_INFO);
-            QDBusConnection::sessionBus()
-                .send(QDBusMessage::createMethodCall(SERVICE_NAME, "/Listen", "", "kill"));
-            return 0;
-        case 'p':
-            Logger::log(QObject::tr("Sending pause signal..."), Logger::INFO, verbose, debug, Q_FUNC_INFO);
-            QDBusConnection::sessionBus()
-                .send(QDBusMessage::createMethodCall(SERVICE_NAME, "/Listen", "", "pause"));
-            return 0;
-        case 'r':
-            Logger::log(QObject::tr("Sending resume signal..."), Logger::INFO, verbose, debug, Q_FUNC_INFO);
-            QDBusConnection::sessionBus()
-                .send(QDBusMessage::createMethodCall(SERVICE_NAME, "/Listen", "", "resume"));
-            return 0;
-        case 's':
-            Logger::log(QObject::tr("Sending startAgain signal..."), Logger::INFO, verbose, debug, Q_FUNC_INFO);
-            QDBusConnection::sessionBus()
-                .send(QDBusMessage::createMethodCall(SERVICE_NAME, "/Listen", "", "scanAgain"));
-            return 0;
-        case 'v':
-            verbose = true;
-            break;
-        case 'V':
-            qInfo() << PROJECT_NAME << "version" << PROJECT_VERSION;
-            return 0;
-        default:
-            Logger::log(QObject::tr("Unknown option: %1").arg(optopt), Logger::ERROR, verbose, debug, Q_FUNC_INFO);
-        }
-    }
+    Logger logger;
+    logger.setLogFile(parser.value("filename"));
 
 #ifdef QT_DEBUG
-    verbose = true;
+    logger.setVerbose();
+#else
+    if (parser.isSet("verbose")) {
+        logger.setVerbose();
+    }
+
+    if (parser.isSet("debug")) {
+        logger.setDebug();
+    }
 #endif
 
-    if (translator.language().isEmpty()) {
-        Logger::log(QObject::tr("Using default language: English."), Logger::INFO, verbose, debug, Q_FUNC_INFO);
+    setAppLanguage(a, parser.value("language").toLower(), logger);
+
+    if (parser.isSet("kill")) {
+        logger.log(QObject::tr("Sending kill signal..."), Q_FUNC_INFO);
+        QDBusConnection::sessionBus()
+            .send(QDBusMessage::createMethodCall(SERVICE_NAME, "/Listen", "", "kill"));
+        return 0;
+    }
+
+    if (parser.isSet("pause")) {
+        logger.log(QObject::tr("Sending pause signal..."), Q_FUNC_INFO);
+        QDBusConnection::sessionBus()
+            .send(QDBusMessage::createMethodCall(SERVICE_NAME, "/Listen", "", "pause"));
+        return 0;
+    }
+
+    if (parser.isSet("resume")) {
+        logger.log(QObject::tr("Sending resume signal..."), Q_FUNC_INFO);
+        QDBusConnection::sessionBus()
+            .send(QDBusMessage::createMethodCall(SERVICE_NAME, "/Listen", "", "resume"));
+        return 0;
+    }
+
+    if (parser.isSet("scan-again")) {
+        logger.log(QObject::tr("Sending startAgain signal..."), Q_FUNC_INFO);
+        QDBusConnection::sessionBus()
+            .send(QDBusMessage::createMethodCall(SERVICE_NAME, "/Listen", "", "scanAgain"));
+        return 0;
     }
 
     ScreenLocker locker;
-    Listener listener(locker);
+    Listener listener(locker, logger);
     a.connect(&listener, &Listener::lockScreen, &locker, &ScreenLocker::lockScreen);
     a.connect(&listener, &Listener::quit, &a, &QApplication::quit);
     /* When screen is locked, no scan is done.
@@ -106,75 +83,99 @@ int main(int argc, char *argv[])
      */
     a.connect(&locker, &ScreenLocker::activeChanged, &listener, &Listener::activeChanged);
 
-    if (verbose) {
-        listener.setVerbose();
-    }
-
-    if (debug) {
-        listener.setDebug();
-    }
-
-    if (discover) {
+    if (parser.isSet("discover")) {
         listener.startDiscovery();
     } else {
         listener.start();
     }
 
-    registerDBusService(listener, debug);
+    registerDBusService(listener, logger);
 
     return a.exec();
 }
 
-void registerDBusService(Listener &listener, bool debug)
+QList<QCommandLineOption> commandLineOptions(const char *name)
+{
+    QList<QCommandLineOption> options;
+    options.append(QCommandLineOption(QStringList() << "D" << "debug",
+        QObject::tr("Enable debug log (implicitly enables verbose mode)."))
+    );
+
+    options.append(QCommandLineOption(QStringList() << "d" << "discover",
+        QObject::tr("Discover new Bluetooth devices in order to add them to the trusted list."))
+    );
+
+    options.append(QCommandLineOption(QStringList() << "f" << "filename",
+        QObject::tr("Where to save log. (Always verbose, debug depends on --debug)."), "filename")
+    );
+
+    options.append(QCommandLineOption(QStringList() << "k" << "kill",
+        QObject::tr("End an existing %1 instance.").arg(name))
+    );
+
+    options.append(QCommandLineOption(QStringList() << "l" << "language",
+        QObject::tr("Set language. (Available: English (default), and Spanish"), "language")
+    );
+
+    options.append(QCommandLineOption(QStringList() << "p" << "pause",
+        QObject::tr("Pause an already running %1 instance.").arg(name))
+    );
+
+    options.append(QCommandLineOption(QStringList() << "r" << "resume",
+        QObject::tr("Resume an already running and paused %1 instance.").arg(name))
+    );
+
+    options.append(QCommandLineOption(QStringList() << "s" << "scan-again",
+        QObject::tr("Same as --discover, but for an already running %1 instance.").arg(name))
+    );
+
+    options.append(QCommandLineOption(QStringList() << "V" << "verbose",
+        QObject::tr("Enable verbose log."))
+    );
+
+    return options;
+}
+
+/* Sets language or leave English as default. */
+void setAppLanguage(QApplication &a, const QString &language, Logger &logger)
+{
+    QTranslator translator;
+    if (language.isEmpty()) {
+        const QStringList uiLanguages = QLocale::system().uiLanguages();
+        for (const QString &locale : uiLanguages) {
+            const QString baseName = "BtScreenLocker_" + QLocale(locale).name();
+            if (translator.load(":/translations/" + baseName)) {
+                a.installTranslator(&translator);
+                break;
+            }
+        }
+    } else if (language == "es" or language == "spanish" or language == "español") {
+        if (translator.load(":/translations/BtScreenLocker_es_US")) {
+            a.installTranslator(&translator);
+        }
+    } else if (language == "en" or language == "english") {
+        logger.log(QObject::tr("Language refers to default language: English."), Q_FUNC_INFO);
+    } else {
+        logger.log(QObject::tr("Language: %1 currently not supported.").arg(language), Q_FUNC_INFO);
+    }
+
+    if (translator.language().isEmpty()) {
+        logger.log(QObject::tr("Using default language: English."), Q_FUNC_INFO);
+    } else {
+        logger.log(QObject::tr("Using language: %1.").arg(translator.language()), Q_FUNC_INFO);
+    }
+}
+
+void registerDBusService(Listener &listener, Logger &logger)
 {
     auto connection = QDBusConnection::sessionBus();
     if (not connection.registerService(SERVICE_NAME)) {
-        Logger::log(
+            logger.log(
             QObject::tr("Couldn't register D-Bus service. Won't be able to respond to IPC messages.\n"
                        "Error message: %1").arg(connection.lastError().message()),
-            Logger::ERROR, true, debug, Q_FUNC_INFO);
+            Q_FUNC_INFO, Logger::ERROR);
         return;
     }
 
     connection.registerObject("/Listen", &listener, QDBusConnection::ExportScriptableSlots);
-}
-
-void usage(const char *programName)
-{
-    qInfo().noquote() << programName << "usage:\n";
-    qInfo() << "--debug"
-            << '\t' << '|' << "-D" << '\t'
-            << "Enable debug log (implicitly enables verbose mode).";
-
-    qInfo() << "--discover"
-            << '\t' << '|' << "-d" << '\t'
-            << "Discover new Bluetooth devices in order to add them to the trusted list.";
-
-    qInfo() << "--help"
-            << "\t\t" << '|' << "-h" << '\t'
-            << "Show this help.";
-
-    qInfo().noquote() << "--kill"
-            << "\t\t" << '|' << "-k" << '\t'
-            << "End an existing" << programName << "instance.";
-
-    qInfo().noquote() << "--pause"
-                      << '\t' << '|' << "-p" << '\t'
-                      << "Pause an already running" << programName << "instance.";
-
-    qInfo().noquote() << "--resume" << '\t' << '|' << "-r" << '\t'
-                      << "Resume an already running and paused" << programName << "instance.";
-
-    qInfo().noquote() << "--scan-again"
-            << '\t' << '|' << "-s" << '\t'
-            << "Same as --discover, but for an already running" << programName << "instance.";
-
-    qInfo() << "--verbose"
-            << '\t' << '|' << "-v" << '\t'
-            << "Enable verbose log.";
-
-    qInfo() << "--version"
-            << '\t' << '|' << "-V" << '\t'
-            << "Show this program version.";
-    qInfo();
 }

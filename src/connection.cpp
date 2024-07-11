@@ -12,11 +12,10 @@
 #include <unistd.h>
 
 Connection::Connection(const QVector<QBluetoothDeviceInfo> &trustedDevices,
-                       bool verbose, bool debug, QObject *parent)
+                       Logger &logger, QObject *parent)
     : QObject{parent}
     , m_trustedDevices(trustedDevices)
-    , m_verbose(verbose)
-    , m_debug(debug)
+    , m_logger(logger)
 {
 }
 
@@ -39,16 +38,16 @@ void Connection::connect()
 
         str2ba(address.data(), &target.rc_bdaddr);
 
-        Logger::log(
+        m_logger.log(
             tr("Trying to connect to Bluetooth device: %1 - %2...").arg(address.data(), name),
-            Logger::INFO, m_verbose, m_debug, Q_FUNC_INFO
+            Q_FUNC_INFO
         );
 
         int sock = socket(AF_BLUETOOTH, SOCK_STREAM, BTPROTO_RFCOMM);
         if (sock < 0) {
-            Logger::log(tr("Couldn't allocate socket to connect to Bluetooth device: %1\n"
+            m_logger.log(tr("Couldn't allocate socket to connect to Bluetooth device: %1\n"
                            "Error: %2").arg(address.data(), std::strerror(errno)),
-                        Logger::ERROR, m_verbose, m_debug, Q_FUNC_INFO
+                        Q_FUNC_INFO, Logger::ERROR
             );
             close(sock);
             break;
@@ -57,15 +56,15 @@ void Connection::connect()
         int status = ::connect(sock, (struct sockaddr *) &target, sizeof(target));
         if (status == 0) {
             close(sock);
-            Logger::log(tr("Connected to Bluetooth device: %1 - %2!").arg(address.data(), name));
+            m_logger.log(tr("Connected to Bluetooth device: %1 - %2!").arg(address.data(), name), Q_FUNC_INFO);
             m_connectedDevices.push_back(device);
             continue;
         }
 
-        Logger::log(
+        m_logger.log(
             tr("Couldn't connect to Bluetooth device: %1 - %2.\n"
                "It may be far or has Bluetooth disabled.").arg(address.data(), name),
-            Logger::WARNING, m_verbose, m_debug, Q_FUNC_INFO
+            Q_FUNC_INFO, Logger::WARNING
         );
     }
 }
