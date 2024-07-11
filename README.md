@@ -89,8 +89,10 @@ Both if you added a new Bluetooth device to the trusted list as if you didn't, B
 |--------------|---------------|-----------------------------------------------------------------------------|
 | --debug      | -D            | Enable debug log (implicitly enables verbose mode).                         |
 | --discover   | -d            | Discover new Bluetooth devices in order to add them to the trusted list.    |
+| --filename   | -f            | Where to save log (always verbose, debug depends on --debug).               |
 | --help       | -h            | Show this help.                                                             |
 | --kill       | -k            | End an existing BtScreenLocker instance.                                    |
+| --language   | -l            | Set language. (Available: English (default), and Spanish).                  |
 | --pause      | -p            | Pause an already running BtScreenLocker instance.                           |
 | --resume     | -r            | Resume an already running and paused BtScreenLocker instance.               |
 | --scan-again | -s            | Same as --discover, but for an already running BtScreenLocker instance.     |

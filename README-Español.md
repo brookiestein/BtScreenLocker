@@ -90,8 +90,10 @@ Tanto si agregaste un nuevo dispositivo Bluetooth de confianza como si no, BtScr
 |--------------|---------------|---------------------------------------------------------------------------------------------|
 | --debug      | -D            | Activa el registro para debuggear (activa el modo verboso de manera implícita).             |
 | --discover   | -d            | Escanea dispositivos Bluetooth para agregarlos a la lista de confianza.                     |
+| --filename   | -f            | Donde guardar los registros (siempre verbose, depurar depende de --debug).                  |
 | --help       | -h            | Muestra esta ayuda.                                                                         |
 | --kill       | -k            | Termina una instancia de BtScreenLocker que ya esté corriendo.                              |
+| --language   | -l            | Establecer idioma. (Disponibles: Inglés (por defecto), y Español).                          |
 | --pause      | -p            | Pausa una instancia de BtScreenLocker que ya esté corriendo.                                |
 | --resume     | -r            | Resume una instancia de BtScreenLocker que ya esté corriendo.                               |
 | --scan-again | -s            | Igual que --discover, pero para una instancia de BtScreenLocker que ya esté corriendo.      |
