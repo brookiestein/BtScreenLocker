@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.28)
 
-project(BtScreenLocker VERSION 1.3.1 LANGUAGES CXX)
+project(BtScreenLocker VERSION 1.4.0 LANGUAGES CXX)
 
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
@@ -15,14 +15,18 @@ add_compile_definitions(SERVICE_NAME="com.github.brookiestein.BluetoothListener"
 
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Bluetooth Core LinguistTools Widgets DBus)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Bluetooth Core LinguistTools Widgets DBus)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(deps REQUIRED IMPORTED_TARGET bluez)
 
 set(TS_FILES BtScreenLocker_es_US.ts)
 list(TRANSFORM TS_FILES PREPEND "translations/")
 qt_create_translation(QM_FILES ${CMAKE_SOURCE_DIR} ${TS_FILES})
 
 set(PROJECT_SOURCES
-    bluetoothlistener.hpp
-    bluetoothlistener.cpp
+    connection.hpp
+    connection.cpp
+    listener.hpp
+    listener.cpp
     devicechooser.hpp
     devicechooser.cpp
     devicechooser.ui
@@ -68,6 +72,7 @@ target_link_libraries(BtScreenLocker PRIVATE
     Qt${QT_VERSION_MAJOR}::Core
     Qt${QT_VERSION_MAJOR}::DBus
     Qt${QT_VERSION_MAJOR}::Widgets
+    PkgConfig::deps
 )
 
 set_target_properties(BtScreenLocker PROPERTIES

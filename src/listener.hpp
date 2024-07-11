@@ -1,30 +1,30 @@
 #ifndef BLUETOOTHLISTENER_HPP
 #define BLUETOOTHLISTENER_HPP
 
-#include <map>
 #include <QBluetoothDeviceInfo>
 #include <QBluetoothDeviceDiscoveryAgent>
 #include <QBluetoothLocalDevice>
-#include <QBluetoothSocket>
 #include <QObject>
 #include <QSettings>
 #include <QSharedPointer>
 #include <QTimer>
+#include <QThread>
 
 #include "screenlocker.hpp"
 
-class BluetoothListener : public QObject
+class Listener : public QObject
 {
     Q_OBJECT
     Q_CLASSINFO("D-Bus Interface", SERVICE_NAME)
 
     QDBusConnection m_dbusConnection;
-    QSettings *m_settings;
+    QSharedPointer<QSettings> m_settings;
     QBluetoothLocalDevice m_localDevice;
-    std::map<QSharedPointer<QBluetoothDeviceInfo>, QBluetoothSocket *> m_trustedDevices;
+    QVector<QBluetoothDeviceInfo> m_trustedDevices;
     QTimer m_deviceDiscoverTimer;
     QTimer m_lookForTrustedDeviceTimer;
-    QBluetoothDeviceDiscoveryAgent *m_discoveryAgent;
+    QSharedPointer<QBluetoothDeviceDiscoveryAgent> m_discoveryAgent;
+    QSharedPointer<QThread> connectionThread;
     ScreenLocker &m_screenLocker;
     bool m_debug;
     bool m_verbose;
@@ -32,8 +32,8 @@ class BluetoothListener : public QObject
 
     QString deviceClassToString(const QBluetoothDeviceInfo &deviceInfo);
 public:
-    explicit BluetoothListener(ScreenLocker &locker, bool verbose = false, bool debug = false, QObject *parent = nullptr);
-    ~BluetoothListener();
+    explicit Listener(ScreenLocker &locker, bool verbose = false, bool debug = false, QObject *parent = nullptr);
+    ~Listener();
     void start();
     void startDiscovery();
     void setDebug();
@@ -44,10 +44,9 @@ signals:
 private slots:
     void hostModeStateChanged(QBluetoothLocalDevice::HostMode state);
     void discoverDevicesTimeout();
-    void checkForTrustedDeviceScanCompleted();
     void checkForTrustedDevice();
 public slots:
-    void screenActive();
+    void activeChanged(bool locked);
     Q_SCRIPTABLE void pause(); /* To pause looking for trusted devices and locking the screen without closing the program. */
     Q_SCRIPTABLE void resume(); /* Opposite */
     Q_SCRIPTABLE void scanAgain();

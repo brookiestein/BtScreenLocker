@@ -45,8 +45,6 @@ void ScreenLocker::lockScreen()
 void ScreenLocker::screenChanged(const QDBusMessage &message)
 {
     m_screenLocked = message.arguments().at(0).toString() == "true" ? true : false;
-    if (not m_screenLocked) {
-        emit screenActive();
-    }
+    emit activeChanged(m_screenLocked);
 }
 

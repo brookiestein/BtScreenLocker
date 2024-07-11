@@ -1,4 +1,4 @@
-#include "bluetoothlistener.hpp"
+#include "listener.hpp"
 
 #include <QBluetoothDeviceDiscoveryAgent>
 #include <QBluetoothSocket>
@@ -9,10 +9,11 @@
 #include <QSettings>
 #include <QStandardPaths>
 
+#include "connection.hpp"
 #include "devicechooser.hpp"
 #include "logger.hpp"
 
-BluetoothListener::BluetoothListener(ScreenLocker &screenLocker, bool verbose, bool debug, QObject *parent)
+Listener::Listener(ScreenLocker &screenLocker, bool verbose, bool debug, QObject *parent)
     : QObject{parent}
     , m_dbusConnection(QDBusConnection::sessionBus())
     , m_screenLocker(screenLocker)
@@ -34,19 +35,10 @@ BluetoothListener::BluetoothListener(ScreenLocker &screenLocker, bool verbose, b
         m_localDevice.powerOn();
     }
 
-    m_discoveryAgent = new QBluetoothDeviceDiscoveryAgent(this);
+    m_discoveryAgent = QSharedPointer<QBluetoothDeviceDiscoveryAgent>(new QBluetoothDeviceDiscoveryAgent(this));
 
-    /*
-     * Use this timer both for discoverying new devices and for looking for already trusted devices.
-     * Pay attention where this object is connected to and disconnected from
-     * checkForTrustedDeviceScanCompleted and discoverDevicesTimeout
-     */
     m_deviceDiscoverTimer.setInterval(30'000); /* Discover devices for 30 seconds. */
-    m_lookForTrustedDeviceTimer.setInterval(10'000); /* Check if trusted device is near every 10 seconds. */
-
-    connect(&m_deviceDiscoverTimer, &QTimer::timeout, this, &BluetoothListener::checkForTrustedDeviceScanCompleted);
-    connect(&m_lookForTrustedDeviceTimer, &QTimer::timeout, this, &BluetoothListener::checkForTrustedDevice);
-    connect(&m_localDevice, &QBluetoothLocalDevice::hostModeStateChanged, this, &BluetoothListener::hostModeStateChanged);
+    m_lookForTrustedDeviceTimer.setInterval(30'000); /* Check if trusted device is near every 10 seconds. */
 
     auto filename = QString("%1%2%3%4%5.ini")
                         .arg(QStandardPaths::writableLocation(QStandardPaths::ConfigLocation),
@@ -56,16 +48,20 @@ BluetoothListener::BluetoothListener(ScreenLocker &screenLocker, bool verbose, b
                              PROJECT_NAME
                              );
 
-    m_settings = new QSettings(filename, QSettings::IniFormat, this);
+    m_settings = QSharedPointer<QSettings>(new QSettings(filename, QSettings::IniFormat, this));
     m_settings->beginGroup("TrustedDevices");
+
+    connect(&m_deviceDiscoverTimer, &QTimer::timeout, this, &Listener::discoverDevicesTimeout);
+    connect(&m_lookForTrustedDeviceTimer, &QTimer::timeout, this, &Listener::checkForTrustedDevice);
+    connect(&m_localDevice, &QBluetoothLocalDevice::hostModeStateChanged, this, &Listener::hostModeStateChanged);
 }
 
-BluetoothListener::~BluetoothListener()
+Listener::~Listener()
 {
     m_settings->endGroup();
 }
 
-void BluetoothListener::start()
+void Listener::start()
 {
     if (m_settings->allKeys().isEmpty()) {
         startDiscovery();
@@ -75,20 +71,16 @@ void BluetoothListener::start()
     m_trustedDevices.clear();
     for (const auto &deviceName : m_settings->allKeys()) {
         auto address = QBluetoothAddress(m_settings->value(deviceName).toString());
-        auto deviceInfo = QSharedPointer<QBluetoothDeviceInfo>(new QBluetoothDeviceInfo(address, deviceName, 0));
-        auto *socket = new QBluetoothSocket(QBluetoothServiceInfo::RfcommProtocol, this);
+        auto deviceInfo = QBluetoothDeviceInfo(address, deviceName, 0);
 
-        m_trustedDevices[deviceInfo] = socket;
+        m_trustedDevices.push_back(deviceInfo);
     }
 
     m_lookForTrustedDeviceTimer.start();
 }
 
-void BluetoothListener::startDiscovery()
+void Listener::startDiscovery()
 {
-    disconnect(&m_deviceDiscoverTimer, &QTimer::timeout, this, &BluetoothListener::checkForTrustedDeviceScanCompleted);
-    connect(&m_deviceDiscoverTimer, &QTimer::timeout, this, &BluetoothListener::discoverDevicesTimeout);
-
     /* If constructor started it, but in main.cpp user started discovery. */
     m_lookForTrustedDeviceTimer.stop();
     Logger::log(tr("Discoverying devices..."), Logger::INFO, m_verbose, m_debug, Q_FUNC_INFO);
@@ -100,17 +92,17 @@ void BluetoothListener::startDiscovery()
                              tr("Please wait up to 30 seconds, I'll show you the devices I discover."));
 }
 
-void BluetoothListener::setDebug()
+void Listener::setDebug()
 {
     m_debug = true;
 }
 
-void BluetoothListener::setVerbose()
+void Listener::setVerbose()
 {
     m_verbose = true;
 }
 
-void BluetoothListener::hostModeStateChanged(QBluetoothLocalDevice::HostMode state)
+void Listener::hostModeStateChanged(QBluetoothLocalDevice::HostMode state)
 {
     if (state == QBluetoothLocalDevice::HostPoweredOff) {
         m_lookForTrustedDeviceTimer.stop();
@@ -125,7 +117,7 @@ void BluetoothListener::hostModeStateChanged(QBluetoothLocalDevice::HostMode sta
     }
 }
 
-void BluetoothListener::discoverDevicesTimeout()
+void Listener::discoverDevicesTimeout()
 {
     Logger::log(tr("Device discovery finished."), Logger::INFO, m_verbose, m_debug, Q_FUNC_INFO);
     m_deviceDiscoverTimer.stop();
@@ -134,9 +126,6 @@ void BluetoothListener::discoverDevicesTimeout()
     QEventLoop loop;
     DeviceChooser chooser;
     connect(&chooser, &DeviceChooser::closed, &loop, &QEventLoop::quit);
-
-    disconnect(&m_deviceDiscoverTimer, &QTimer::timeout, this, &BluetoothListener::discoverDevicesTimeout);
-    connect(&m_deviceDiscoverTimer, &QTimer::timeout, this, &BluetoothListener::checkForTrustedDeviceScanCompleted);
 
     for (const auto &device : m_discoveryAgent->discoveredDevices()) {
         if (device.rssi() == 0) { /* Paired devices will be shown even when they're not near. */
@@ -182,71 +171,67 @@ void BluetoothListener::discoverDevicesTimeout()
     }
 }
 
-void BluetoothListener::checkForTrustedDeviceScanCompleted()
-{
-    m_discoveryAgent->stop();
-
-    QStringList nearDevices;
-    quint8 farDevices {};
-
-    for (const auto &discoveredDevice : m_discoveryAgent->discoveredDevices()) {
-        for (auto it = m_trustedDevices.begin(); it != m_trustedDevices.end(); ++it) {
-            if (discoveredDevice.address() != it->first->address()) {
-                continue;
-            }
-
-            if (discoveredDevice.rssi() == 0) {
-                ++farDevices;
-            } else {
-                nearDevices << discoveredDevice.name();
-            }
-        }
-    }
-
-    if (farDevices >= m_trustedDevices.size()) {
-        if (not m_screenLocker.isScreenLocked()) {
-            Logger::log(
-                tr("Locking screen because all trusted devices are far way."),
-                Logger::INFO,
-                m_verbose, m_debug, Q_FUNC_INFO);
-            emit lockScreen();
-        }
-
-        return;
-    }
-
-    QString devices;
-    for (int i {}; i < nearDevices.size(); ++i) {
-        devices += QString("%1. %2%3")
-                       .arg(QString::number(i + 1),
-                            nearDevices[i],
-                            i < nearDevices.size() - 1 ? ", " : "");
-    }
-
-    Logger::log(
-        tr("Not locking screen because the following trusted devices are near:\n%1").arg(devices),
-        Logger::INFO, m_verbose, m_debug, Q_FUNC_INFO
-    );
-
-    m_lookForTrustedDeviceTimer.start();
-}
-
-void BluetoothListener::checkForTrustedDevice()
+void Listener::checkForTrustedDevice()
 {
     Logger::log(tr("Checking whether trusted devices are near..."),
                 Logger::INFO, m_verbose, m_debug, Q_FUNC_INFO);
 
     m_lookForTrustedDeviceTimer.stop();
-    m_discoveryAgent->start();
-    m_deviceDiscoverTimer.start();
+
+    connectionThread.clear();
+    connectionThread = QSharedPointer<QThread>(QThread::create([this] () {
+        Connection connection(m_trustedDevices, m_verbose, m_debug);
+        connection.connect();
+        auto connectedDevices = connection.connectedDevices();
+
+        if (connectedDevices.empty()) {
+            Logger::log(
+                tr("Locking screen because all trusted devices are far way."),
+                Logger::INFO,
+                m_verbose, m_debug, Q_FUNC_INFO);
+            emit lockScreen();
+
+            return;
+        }
+
+        QString devices;
+        for (int i {}; i < connectedDevices.size(); ++i) {
+            const auto &deviceInfo = connectedDevices[i];
+            devices += QString("%1. %2 - %3%4")
+                           .arg(QString::number(i + 1),
+                                deviceInfo.address().toString(),
+                                deviceInfo.name(),
+                                (i < connectedDevices.size() - 1 ? "\n" : "")
+                        );
+        }
+
+        Logger::log(
+            tr("Not locking screen because the following trusted devices are near:\n%1").arg(devices),
+            Logger::INFO, m_verbose, m_debug, Q_FUNC_INFO
+            );
+    }));
+
+    connect(connectionThread.data(), SIGNAL(finished()), &m_lookForTrustedDeviceTimer, SLOT(start()));
+
+    connectionThread->start();
 }
 
-void BluetoothListener::screenActive()
+void Listener::activeChanged(bool locked)
 {
-    m_lookForTrustedDeviceTimer.start();
+    QString message;
+
+    if (locked) {
+        message = tr("Not looking for trusted devices because screen is locked.");
+        m_lookForTrustedDeviceTimer.stop();
+    } else {
+        message = tr("Screen active. Looking for trusted devices again.");
+        m_lookForTrustedDeviceTimer.start();
+    }
+
+    Logger::log(message, Logger::INFO, m_verbose, m_debug, Q_FUNC_INFO);
 }
 
-void BluetoothListener::pause()
+void Listener::pause()
 {
     if (m_stopped) {
         Logger::log(tr("Looking for trusted devices is already stopped, ignoring message."),
@@ -262,7 +247,7 @@ void BluetoothListener::pause()
     m_stopped = true;
 }
 
-void BluetoothListener::resume()
+void Listener::resume()
 {
     if (not m_stopped) {
         Logger::log(tr("Looking for trusted devices isn't stopped, ignoring message."),
@@ -276,14 +261,14 @@ void BluetoothListener::resume()
     m_stopped = false;
 }
 
-void BluetoothListener::scanAgain()
+void Listener::scanAgain()
 {
     Logger::log(tr("Discoverying device started by D-Bus signal telling me so."),
                 Logger::INFO, m_verbose, m_debug, Q_FUNC_INFO);
     startDiscovery();
 }
 
-void BluetoothListener::kill()
+void Listener::kill()
 {
     Logger::log(tr("Quitting because of D-Bus signal telling me so..."),
                 Logger::INFO, m_verbose, m_debug, Q_FUNC_INFO);

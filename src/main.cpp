@@ -6,11 +6,11 @@
 
 #include <getopt.h>
 
-#include "bluetoothlistener.hpp"
+#include "listener.hpp"
 #include "logger.hpp"
 #include "screenlocker.hpp"
 
-void registerDBusService(BluetoothListener &listener, bool debug);
+void registerDBusService(Listener &listener, bool debug);
 void usage(const char *programName);
 
 int main(int argc, char *argv[])
@@ -98,13 +98,13 @@ int main(int argc, char *argv[])
     }
 
     ScreenLocker locker;
-    BluetoothListener listener(locker);
-    a.connect(&listener, &BluetoothListener::lockScreen, &locker, &ScreenLocker::lockScreen);
-    a.connect(&listener, &BluetoothListener::quit, &a, &QApplication::quit);
+    Listener listener(locker);
+    a.connect(&listener, &Listener::lockScreen, &locker, &ScreenLocker::lockScreen);
+    a.connect(&listener, &Listener::quit, &a, &QApplication::quit);
     /* When screen is locked, no scan is done.
      * Connect to this signal to start scanning when screen is unlocked again.
      */
-    a.connect(&locker, &ScreenLocker::screenActive, &listener, &BluetoothListener::screenActive);
+    a.connect(&locker, &ScreenLocker::activeChanged, &listener, &Listener::activeChanged);
 
     if (verbose) {
         listener.setVerbose();
@@ -125,7 +125,7 @@ int main(int argc, char *argv[])
     return a.exec();
 }
 
-void registerDBusService(BluetoothListener &listener, bool debug)
+void registerDBusService(Listener &listener, bool debug)
 {
     auto connection = QDBusConnection::sessionBus();
     if (not connection.registerService(SERVICE_NAME)) {
