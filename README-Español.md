@@ -88,6 +88,7 @@ Tanto si agregaste un nuevo dispositivo Bluetooth de confianza como si no, BtScr
 # Lista de Opciones
 | Opción Larga | Opción Corta  | Descripción                                                                                 |
 |--------------|---------------|---------------------------------------------------------------------------------------------|
+| --autostart  | -a            | Registra BtScreenLocker para que se inicie automáticamente cuando tu PC arranca. (con args) |
 | --debug      | -D            | Activa el registro para debuggear (activa el modo verboso de manera implícita).             |
 | --discover   | -d            | Escanea dispositivos Bluetooth para agregarlos a la lista de confianza.                     |
 | --filename   | -f            | Donde guardar los registros (siempre verbose, depurar depende de --debug).                  |

@@ -87,6 +87,7 @@ Both if you added a new Bluetooth device to the trusted list as if you didn't, B
 # Cheat Sheet
 | Long Option  | Short Option  | Description                                                                 |
 |--------------|---------------|-----------------------------------------------------------------------------|
+| --autostart  | -a            | Register BtScreenLocker to automatically start on boot. (with passed args)  |
 | --debug      | -D            | Enable debug log (implicitly enables verbose mode).                         |
 | --discover   | -d            | Discover new Bluetooth devices in order to add them to the trusted list.    |
 | --filename   | -f            | Where to save log (always verbose, debug depends on --debug).               |
