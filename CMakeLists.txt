@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.28)
 
 project(BtScreenLocker
-    VERSION 1.5.0
+    VERSION 1.6.0
     LANGUAGES CXX
     DESCRIPTION "Daemon to lock your screen if trusted Bluetooth devices go away."
 )
@@ -13,10 +13,14 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+set(DESKTOP_FILE resources/BtScreenLocker.desktop)
+
 add_compile_definitions(PROJECT_NAME="${PROJECT_NAME}")
 add_compile_definitions(PROJECT_VERSION="${PROJECT_VERSION}")
 add_compile_definitions(PROJECT_DESCRIPTION="${PROJECT_DESCRIPTION}")
 add_compile_definitions(SERVICE_NAME="com.github.brookiestein.BluetoothListener")
+add_compile_definitions(AUTOSTART_FILE="com.github.brookiestein.btscreenlocker")
+add_compile_definitions(PREFIX_PATH="${CMAKE_INSTALL_PREFIX}")
 
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Bluetooth Core LinguistTools Widgets DBus)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Bluetooth Core LinguistTools Widgets DBus)
@@ -45,6 +49,12 @@ set(PROJECT_SOURCES
 )
 
 list(TRANSFORM PROJECT_SOURCES PREPEND "src/")
+
+string(REPLACE "/" "\\/" INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
+execute_process(
+    COMMAND sed -i "s/Exec=.*/Exec=${INSTALL_PREFIX}\\/bin\\/${PROJECT_NAME}/g" ${DESKTOP_FILE}
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+)
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(BtScreenLocker

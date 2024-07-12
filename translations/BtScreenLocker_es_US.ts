@@ -313,22 +313,22 @@ Puedes escanear los dispositivos de nuevo en cualquier momento ejecutando otra i
         <translation type="vanished">Usando idioma: %1</translation>
     </message>
     <message>
-        <location filename="../src/main.cpp" line="50"/>
+        <location filename="../src/main.cpp" line="54"/>
         <source>Sending kill signal...</source>
         <translation>Enviando señal para terminar...</translation>
     </message>
     <message>
-        <location filename="../src/main.cpp" line="57"/>
+        <location filename="../src/main.cpp" line="61"/>
         <source>Sending pause signal...</source>
         <translation>Enviando señal para pausar...</translation>
     </message>
     <message>
-        <location filename="../src/main.cpp" line="64"/>
+        <location filename="../src/main.cpp" line="68"/>
         <source>Sending resume signal...</source>
         <translation>Enviando señal para resumir...</translation>
     </message>
     <message>
-        <location filename="../src/main.cpp" line="71"/>
+        <location filename="../src/main.cpp" line="75"/>
         <source>Sending startAgain signal...</source>
         <translation>Enviando señal para escanear de nuevo...</translation>
     </message>
@@ -337,76 +337,109 @@ Puedes escanear los dispositivos de nuevo en cualquier momento ejecutando otra i
         <translation type="vanished">Opción desconocida: %1</translation>
     </message>
     <message>
-        <location filename="../src/main.cpp" line="163"/>
+        <location filename="../src/main.cpp" line="177"/>
         <source>Using default language: English.</source>
         <translation>Usando idioma por defecto: Inglés.</translation>
     </message>
     <message>
-        <location filename="../src/main.cpp" line="101"/>
+        <location filename="../src/main.cpp" line="115"/>
         <source>Enable debug log (implicitly enables verbose mode).</source>
         <translation>Activar registro en modo depurar (activa el registro verboso de manera implícita).</translation>
     </message>
     <message>
-        <location filename="../src/main.cpp" line="105"/>
+        <location filename="../src/main.cpp" line="110"/>
+        <source>Register %1 to automatically start on boot.
+(Will always autostart with passed parameters).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/main.cpp" line="119"/>
         <source>Discover new Bluetooth devices in order to add them to the trusted list.</source>
         <translation>Buscar nuevos dispositivos Bluetooth para agregarlos a la lista de confianza.</translation>
     </message>
     <message>
-        <location filename="../src/main.cpp" line="109"/>
+        <location filename="../src/main.cpp" line="123"/>
         <source>Where to save log. (Always verbose, debug depends on --debug).</source>
         <translation>Donde guardar los registros (Verboso siempre, depurar depende de --debug).</translation>
     </message>
     <message>
-        <location filename="../src/main.cpp" line="113"/>
+        <location filename="../src/main.cpp" line="127"/>
         <source>End an existing %1 instance.</source>
         <translation>Termina un instancia de %1 existente.</translation>
     </message>
     <message>
-        <location filename="../src/main.cpp" line="117"/>
+        <location filename="../src/main.cpp" line="131"/>
         <source>Set language. (Available: English (default), and Spanish</source>
         <translation>Establecer idioma (Disponible: Inglés (por defecto), y Español</translation>
     </message>
     <message>
-        <location filename="../src/main.cpp" line="121"/>
+        <location filename="../src/main.cpp" line="135"/>
         <source>Pause an already running %1 instance.</source>
         <translation>Indicar a una instancia de %1 que ya está corriendo, que se pause.</translation>
     </message>
     <message>
-        <location filename="../src/main.cpp" line="125"/>
+        <location filename="../src/main.cpp" line="139"/>
         <source>Resume an already running and paused %1 instance.</source>
         <translation>Indicar a una instancia de %1, que está corriendo y está en pausa, que se reanude.</translation>
     </message>
     <message>
-        <location filename="../src/main.cpp" line="129"/>
+        <location filename="../src/main.cpp" line="143"/>
         <source>Same as --discover, but for an already running %1 instance.</source>
         <translation>Igual que --discover, pero para una instancia de %1 que ya está corriendo.</translation>
     </message>
     <message>
-        <location filename="../src/main.cpp" line="133"/>
+        <location filename="../src/main.cpp" line="147"/>
         <source>Enable verbose log.</source>
         <translation>Activa el registro en modo verboso.</translation>
     </message>
     <message>
-        <location filename="../src/main.cpp" line="157"/>
+        <location filename="../src/main.cpp" line="171"/>
         <source>Language refers to default language: English.</source>
         <translation>Idioma se refiere al idioma por defecto: Inglés.</translation>
     </message>
     <message>
-        <location filename="../src/main.cpp" line="159"/>
+        <location filename="../src/main.cpp" line="173"/>
         <source>Language: %1 currently not supported.</source>
         <translation>Idioma: %1 actualmente no soportado.</translation>
     </message>
     <message>
-        <location filename="../src/main.cpp" line="165"/>
+        <location filename="../src/main.cpp" line="179"/>
         <source>Using language: %1.</source>
         <translation>Usando idioma: %1.</translation>
+    </message>
+    <message>
+        <location filename="../src/main.cpp" line="188"/>
+        <source>Error while loading the autostart file. Can&apos;t continue.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/main.cpp" line="225"/>
+        <source>Warning! Overwriting old autostart configuration.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/main.cpp" line="235"/>
+        <source>Error while opening autostart file. Can&apos;t continue.
+Error: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/main.cpp" line="244"/>
+        <source>Error while writing autostart file.
+Error: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../src/main.cpp" line="250"/>
+        <source>%1 will autostart on boot!</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Using Spanish</source>
         <translation type="vanished">Usando Español</translation>
     </message>
     <message>
-        <location filename="../src/main.cpp" line="174"/>
+        <location filename="../src/main.cpp" line="259"/>
         <source>Couldn&apos;t register D-Bus service. Won&apos;t be able to respond to IPC messages.
 Error message: %1</source>
         <translation>No se pudo registrar el servicio D-BUS. No será posible responder a mensajes IPC.\n

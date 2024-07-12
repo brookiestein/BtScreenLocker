@@ -3,5 +3,6 @@
         <file>translations/BtScreenLocker_es_US.ts</file>
         <file>resources/assets/icon.png</file>
         <file>translations/BtScreenLocker_es_US.qm</file>
+        <file>resources/BtScreenLocker.desktop</file>
     </qresource>
 </RCC>

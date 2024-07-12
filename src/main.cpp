@@ -3,7 +3,10 @@
 #include <QCommandLineParser>
 #include <QDBusConnection>
 #include <QDebug>
+#include <QDir>
+#include <QFile>
 #include <QLocale>
+#include <QStandardPaths>
 #include <QTranslator>
 
 #include "listener.hpp"
@@ -12,6 +15,7 @@
 
 QList<QCommandLineOption> commandLineOptions(const char *name);
 void setAppLanguage(QApplication &a, const QString &language, Logger &logger);
+int enableAutostart(const QCommandLineParser &parser, Logger &logger, const char *name);
 void registerDBusService(Listener &listener, Logger &logger);
 void usage(const char *programName);
 
@@ -74,6 +78,10 @@ int main(int argc, char *argv[])
         return 0;
     }
 
+    if (parser.isSet("autostart")) {
+        return enableAutostart(parser, logger, argv[0]);
+    }
+
     ScreenLocker locker;
     Listener listener(locker, logger);
     a.connect(&listener, &Listener::lockScreen, &locker, &ScreenLocker::lockScreen);
@@ -97,6 +105,12 @@ int main(int argc, char *argv[])
 QList<QCommandLineOption> commandLineOptions(const char *name)
 {
     QList<QCommandLineOption> options;
+
+    options.append(QCommandLineOption(QStringList() << "a" << "autostart",
+        QObject::tr("Register %1 to automatically start on boot.\n"
+                    "(Will always autostart with passed parameters).").arg(name))
+    );
+
     options.append(QCommandLineOption(QStringList() << "D" << "debug",
         QObject::tr("Enable debug log (implicitly enables verbose mode)."))
     );
@@ -164,6 +178,77 @@ void setAppLanguage(QApplication &a, const QString &language, Logger &logger)
     } else {
         logger.log(QObject::tr("Using language: %1.").arg(translator.language()), Q_FUNC_INFO);
     }
+}
+
+int enableAutostart(const QCommandLineParser &parser, Logger &logger, const char *name)
+{
+    QString filename(":/resources/BtScreenLocker.desktop");
+    QFile file(filename);
+    if (not file.open(QIODevice::ReadOnly)) {
+        logger.log(QObject::tr("Error while loading the autostart file. Can't continue."),
+                   Q_FUNC_INFO, Logger::ERROR);
+        return 1;
+    }
+
+    QStringList args;
+    if (parser.isSet("debug")) {
+        args << "-D";
+    }
+
+    if (parser.isSet("filename")) {
+        args << QString("-f %1").arg(parser.value("filename"));
+    }
+
+    if (parser.isSet("language")) {
+        args << QString("-l %1").arg(parser.value("language"));
+    }
+
+    if (parser.isSet("verbose")) {
+        args << "-V";
+    }
+
+    auto contents = QString::fromUtf8(file.readAll());
+    QString a;
+    for (const auto &s : args) {
+        a += QString(" %1").arg(s);
+    }
+
+    filename = QString("%1%2%3%4%5")
+                   .arg(QStandardPaths::writableLocation(QStandardPaths::ConfigLocation),
+                        QDir::separator(),
+                        "autostart",
+                        QDir::separator(),
+                        AUTOSTART_FILE);
+
+    if (QFile::exists(filename)) {
+        logger.log(
+            QObject::tr("Warning! Overwriting old autostart configuration."),
+            Q_FUNC_INFO,
+            Logger::WARNING
+        );
+    }
+
+    file.close();
+    file.setFileName(filename);
+    if (not file.open(QIODevice::WriteOnly)) {
+        logger.log(
+            QObject::tr("Error while opening autostart file. Can't continue.\nError: %1").arg(file.errorString()),
+            Q_FUNC_INFO, Logger::ERROR
+        );
+        return 1;
+    }
+
+    file.write(QByteArray::fromStdString(contents.toStdString()));
+    if (not file.flush()) {
+        logger.log(
+            QObject::tr("Error while writing autostart file.\nError: %1").arg(file.errorString()),
+            Q_FUNC_INFO
+        );
+        return 1;
+    }
+
+    logger.log(QObject::tr("%1 will autostart on boot!").arg(name), Q_FUNC_INFO);
+    return 0;
 }
 
 void registerDBusService(Listener &listener, Logger &logger)
