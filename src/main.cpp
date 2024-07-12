@@ -213,6 +213,8 @@ int enableAutostart(const QCommandLineParser &parser, Logger &logger, const char
         a += QString(" %1").arg(s);
     }
 
+    contents.replace("/bin/BtScreenLocker", "/bin/BtScreenLocker" + a);
+
     filename = QString("%1%2%3%4%5")
                    .arg(QStandardPaths::writableLocation(QStandardPaths::ConfigLocation),
                         QDir::separator(),

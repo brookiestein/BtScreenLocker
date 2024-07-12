@@ -63,9 +63,9 @@ void Logger::log(const QString &message, const QString &function, TYPE type)
         if (file.open(QIODevice::Append)) {
             file.write(QByteArray::fromStdString((formattedMessage + "\n").toStdString()));
         } else {
-            qCritical().noquote() << QDateTime::currentDateTime().toString(Qt::ISODate)
-                                  << "Couldn't open file:" << m_filename
-                                  << "won't be able to write log to that file.";
+            qCritical().noquote().nospace() << date << ": ERROR: "
+                                  << "Couldn't open file: " << m_filename
+                                  << " won't be able to write log to that file.";
         }
     }
 }

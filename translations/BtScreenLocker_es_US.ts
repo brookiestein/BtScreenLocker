@@ -350,7 +350,8 @@ Puedes escanear los dispositivos de nuevo en cualquier momento ejecutando otra i
         <location filename="../src/main.cpp" line="110"/>
         <source>Register %1 to automatically start on boot.
 (Will always autostart with passed parameters).</source>
-        <translation type="unfinished"></translation>
+        <translation>Registrar %1 para que se inicie automáticamente cuando tu PC enciende.
+(Siempre se auto-iniciará con los parámetros que le pases).</translation>
     </message>
     <message>
         <location filename="../src/main.cpp" line="119"/>
@@ -410,36 +411,38 @@ Puedes escanear los dispositivos de nuevo en cualquier momento ejecutando otra i
     <message>
         <location filename="../src/main.cpp" line="188"/>
         <source>Error while loading the autostart file. Can&apos;t continue.</source>
-        <translation type="unfinished"></translation>
+        <translation>Error mientras se cargaba el archivo de auto-inicio. No se podrá continuar.</translation>
     </message>
     <message>
-        <location filename="../src/main.cpp" line="225"/>
+        <location filename="../src/main.cpp" line="227"/>
         <source>Warning! Overwriting old autostart configuration.</source>
-        <translation type="unfinished"></translation>
+        <translation>¡Advertencia! Sobreescribiendo la anterior configuración.</translation>
     </message>
     <message>
-        <location filename="../src/main.cpp" line="235"/>
+        <location filename="../src/main.cpp" line="237"/>
         <source>Error while opening autostart file. Can&apos;t continue.
 Error: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Error mientras se abría el archivo de auto-inicio. No se podrá continuar.
+Error: %1</translation>
     </message>
     <message>
-        <location filename="../src/main.cpp" line="244"/>
+        <location filename="../src/main.cpp" line="246"/>
         <source>Error while writing autostart file.
 Error: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Error mientras se escribía el archivo de auto-inicio.\n
+Error: %1</translation>
     </message>
     <message>
-        <location filename="../src/main.cpp" line="250"/>
+        <location filename="../src/main.cpp" line="252"/>
         <source>%1 will autostart on boot!</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 se iniciará automáticamente cuando tu PC arranque.</translation>
     </message>
     <message>
         <source>Using Spanish</source>
         <translation type="vanished">Usando Español</translation>
     </message>
     <message>
-        <location filename="../src/main.cpp" line="259"/>
+        <location filename="../src/main.cpp" line="261"/>
         <source>Couldn&apos;t register D-Bus service. Won&apos;t be able to respond to IPC messages.
 Error message: %1</source>
         <translation>No se pudo registrar el servicio D-BUS. No será posible responder a mensajes IPC.\n
