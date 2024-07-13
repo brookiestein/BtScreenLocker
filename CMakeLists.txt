@@ -22,7 +22,7 @@ add_compile_definitions(SERVICE_NAME="com.github.brookiestein.BluetoothListener"
 add_compile_definitions(AUTOSTART_FILE="com.github.brookiestein.btscreenlocker")
 add_compile_definitions(PREFIX_PATH="${CMAKE_INSTALL_PREFIX}")
 
-find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Bluetooth Core LinguistTools Widgets DBus)
+find_package(QT NAMES Qt5 REQUIRED COMPONENTS Bluetooth Core LinguistTools Widgets DBus)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Bluetooth Core LinguistTools Widgets DBus)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(deps REQUIRED IMPORTED_TARGET bluez)
