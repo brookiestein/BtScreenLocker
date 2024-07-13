@@ -55,6 +55,10 @@ execute_process(
     COMMAND sed -i "s/Exec=.*/Exec=${INSTALL_PREFIX}\\/bin\\/${PROJECT_NAME}/g" ${DESKTOP_FILE}
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
+execute_process(
+    COMMAND sed -i "s/Icon=.*/Icon=${INSTALL_PREFIX}\\/share\\/${PROJECT_NAME}\\/resources\\/assets\\/icon.png/g" ${DESKTOP_FILE}
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+)
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(BtScreenLocker
