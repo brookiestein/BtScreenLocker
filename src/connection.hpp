@@ -13,7 +13,7 @@ class Connection : public QObject
     QVector<QBluetoothDeviceInfo> m_connectedDevices;
     Logger &m_logger;
 public:
-    Connection(const QVector<QBluetoothDeviceInfo> &trustedDevices, Logger &logger, QObject *parent = nullptr);
+    Connection(const QVector<QBluetoothDeviceInfo> &trustedDevices, QObject *parent = nullptr);
     void connect();
     QVector<QBluetoothDeviceInfo> connectedDevices();
 };

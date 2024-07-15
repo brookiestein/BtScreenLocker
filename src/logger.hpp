@@ -9,9 +9,10 @@ class Logger : public QObject
     bool m_verbose;
     bool m_debug;
     QString m_filename;
+    Logger(bool verbose = false, bool debug = false, const QString &filename = QString());
 public:
     enum TYPE { INFO = 0, WARNING, ERROR, FATAL };
-    Logger(bool verbose = false, bool debug = false, const QString &filename = QString());
+    static Logger &instance(bool verbose = false, bool debug = false, const QString &filename = QString());
     void setVerbose();
     void setDebug();
     void setLogFile(const QString &filename);

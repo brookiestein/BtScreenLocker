@@ -32,7 +32,7 @@ class Listener : public QObject
 
     QString deviceClassToString(const QBluetoothDeviceInfo &deviceInfo);
 public:
-    explicit Listener(ScreenLocker &locker, Logger &logger, QObject *parent = nullptr);
+    explicit Listener(ScreenLocker &locker, QObject *parent = nullptr);
     ~Listener();
     void start();
     void startDiscovery();

@@ -1,3 +1,5 @@
+#include <map>
+
 #include <QApplication>
 #include <QCommandLineOption>
 #include <QCommandLineParser>
@@ -6,6 +8,7 @@
 #include <QDir>
 #include <QFile>
 #include <QLocale>
+#include <QSharedPointer>
 #include <QStandardPaths>
 #include <QTranslator>
 
@@ -14,7 +17,7 @@
 #include "screenlocker.hpp"
 
 QList<QCommandLineOption> commandLineOptions(const char *name);
-void setAppLanguage(QApplication &a, const QString &language, Logger &logger);
+QTranslator *setAppLanguage(std::map<QString, Logger::TYPE> &logMessages, const QString &language);
 int enableAutostart(const QCommandLineParser &parser, Logger &logger, const char *name);
 void registerDBusService(Listener &listener, Logger &logger);
 void usage(const char *programName);
@@ -33,7 +36,11 @@ int main(int argc, char *argv[])
     parser.addOptions(commandLineOptions(argv[0]));
     parser.process(a);
 
-    Logger logger;
+    std::map<QString, Logger::TYPE> logMessages;
+    auto translator = QSharedPointer<QTranslator>(setAppLanguage(logMessages, parser.value("language")));
+    a.installTranslator(translator.data());
+
+    auto &logger = Logger::instance();
     logger.setLogFile(parser.value("filename"));
 
 #ifdef QT_DEBUG
@@ -48,7 +55,9 @@ int main(int argc, char *argv[])
     }
 #endif
 
-    setAppLanguage(a, parser.value("language").toLower(), logger);
+    for (const auto &[message, type] : logMessages) {
+        logger.log(message, Q_FUNC_INFO, type);
+    }
 
     if (parser.isSet("kill")) {
         logger.log(QObject::tr("Sending kill signal..."), Q_FUNC_INFO);
@@ -83,7 +92,7 @@ int main(int argc, char *argv[])
     }
 
     ScreenLocker locker;
-    Listener listener(locker, logger);
+    Listener listener(locker);
     a.connect(&listener, &Listener::lockScreen, &locker, &ScreenLocker::lockScreen);
     a.connect(&listener, &Listener::quit, &a, &QApplication::quit);
     /* When screen is locked, no scan is done.
@@ -151,33 +160,33 @@ QList<QCommandLineOption> commandLineOptions(const char *name)
 }
 
 /* Sets language or leave English as default. */
-void setAppLanguage(QApplication &a, const QString &language, Logger &logger)
+QTranslator *setAppLanguage(std::map<QString, Logger::TYPE> &logMessages, const QString &language)
 {
-    QTranslator translator;
+    logMessages[QObject::tr("Trying to set program language to: %1...").arg(language)] = Logger::INFO;
+    QTranslator *translator = new QTranslator();
     if (language.isEmpty()) {
         const QStringList uiLanguages = QLocale::system().uiLanguages();
         for (const QString &locale : uiLanguages) {
             const QString baseName = "BtScreenLocker_" + QLocale(locale).name();
-            if (translator.load(":/translations/" + baseName)) {
-                a.installTranslator(&translator);
+            if (translator->load(QLocale(), ":/translations/" + baseName)) {
                 break;
             }
         }
     } else if (language == "es" or language == "spanish" or language == "español") {
-        if (translator.load(":/translations/BtScreenLocker_es_US")) {
-            a.installTranslator(&translator);
-        }
+        translator->load(QLocale(), ":/translations/BtScreenLocker_es_US.qm");
     } else if (language == "en" or language == "english") {
-        logger.log(QObject::tr("Language refers to default language: English."), Q_FUNC_INFO);
+        logMessages[QObject::tr("Language refers to default language: English.")] = Logger::INFO;
     } else {
-        logger.log(QObject::tr("Language: %1 currently not supported.").arg(language), Q_FUNC_INFO);
+        logMessages[QObject::tr("Language: %1 currently not supported.").arg(language)] = Logger::ERROR;
     }
 
-    if (translator.language().isEmpty()) {
-        logger.log(QObject::tr("Using default language: English."), Q_FUNC_INFO);
+    if (translator->language().isEmpty()) {
+        logMessages[QObject::tr("Using default language: English.")] = Logger::INFO;
     } else {
-        logger.log(QObject::tr("Using language: %1.").arg(translator.language()), Q_FUNC_INFO);
+        logMessages[QObject::tr("Using language: %1.").arg(translator->language())] = Logger::INFO;
     }
+
+    return translator;
 }
 
 int enableAutostart(const QCommandLineParser &parser, Logger &logger, const char *name)

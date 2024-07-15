@@ -13,13 +13,14 @@
 #include "devicechooser.hpp"
 #include "logger.hpp"
 
-Listener::Listener(ScreenLocker &screenLocker, Logger &logger, QObject *parent)
+Listener::Listener(ScreenLocker &screenLocker, QObject *parent)
     : QObject{parent}
     , m_dbusConnection(QDBusConnection::sessionBus())
     , m_screenLocker(screenLocker)
-    , m_logger(logger)
+    , m_logger(Logger::instance())
     , m_stopped(false)
 {
+
     if (not m_localDevice.isValid()) {
         auto message = tr("There isn't a valid Bluetooth device on this machine. Can't do anything.");
         QMessageBox::critical(nullptr,
@@ -163,7 +164,7 @@ void Listener::checkForTrustedDevice()
 
     connectionThread.clear();
     connectionThread = QSharedPointer<QThread>(QThread::create([this] () {
-        Connection connection(m_trustedDevices, m_logger);
+        Connection connection(m_trustedDevices);
         connection.connect();
         auto connectedDevices = connection.connectedDevices();
 

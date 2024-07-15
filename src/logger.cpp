@@ -11,6 +11,12 @@ Logger::Logger(bool verbose, bool debug, const QString &filename)
 {
 }
 
+Logger &Logger::instance(bool verbose, bool debug, const QString &filename)
+{
+    static Logger logger;
+    return logger;
+}
+
 void Logger::setVerbose()
 {
     m_verbose = true;
@@ -61,7 +67,7 @@ void Logger::log(const QString &message, const QString &function, TYPE type)
     if (not m_filename.isEmpty()) {
         QFile file(m_filename);
         if (file.open(QIODevice::Append)) {
-            file.write(QByteArray::fromStdString((formattedMessage + "\n").toStdString()));
+            file.write(QByteArray::fromStdString((finalMessage + "\n").toStdString()));
         } else {
             qCritical().noquote().nospace() << date << ": ERROR: "
                                   << "Couldn't open file: " << m_filename

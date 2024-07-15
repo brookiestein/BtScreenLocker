@@ -11,11 +11,10 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-Connection::Connection(const QVector<QBluetoothDeviceInfo> &trustedDevices,
-                       Logger &logger, QObject *parent)
+Connection::Connection(const QVector<QBluetoothDeviceInfo> &trustedDevices, QObject *parent)
     : QObject{parent}
     , m_trustedDevices(trustedDevices)
-    , m_logger(logger)
+    , m_logger(Logger::instance())
 {
 }
 
