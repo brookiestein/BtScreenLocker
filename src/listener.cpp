@@ -50,6 +50,28 @@ Listener::Listener(ScreenLocker &screenLocker, QObject *parent)
     connect(&m_deviceDiscoverTimer, &QTimer::timeout, this, &Listener::discoverDevicesTimeout);
     connect(&m_lookForTrustedDeviceTimer, &QTimer::timeout, this, &Listener::checkForTrustedDevice);
     connect(&m_localDevice, &QBluetoothLocalDevice::hostModeStateChanged, this, &Listener::hostModeStateChanged);
+
+    connect(&m_localDevice,
+            &QBluetoothLocalDevice::pairingFinished,
+            [=] (const QBluetoothAddress &address, QBluetoothLocalDevice::Pairing pairing) {
+                auto message = tr("Bluetooth device: %1 ").arg(address.toString());
+                switch (pairing)
+                {
+                case QBluetoothLocalDevice::Unpaired:
+                    message += tr("wasn't paired.");
+                    break;
+                case QBluetoothLocalDevice::Paired:
+                    message += tr("was successfully paired!");
+                    break;
+                case QBluetoothLocalDevice::AuthorizedPaired:
+                    message += tr("was already paired.");
+                    break;
+                }
+
+                m_logger.log(message, Q_FUNC_INFO);
+                QMessageBox::information(nullptr, tr("Information"), message);
+            }
+        );
 }
 
 Listener::~Listener()
@@ -127,15 +149,33 @@ void Listener::discoverDevicesTimeout()
     auto devicesInfo = chooser.selectedDevices();
     for (const auto &[name, address] : devicesInfo) {
         m_logger.log(tr("Adding device %1 to the trusted devices list...").arg(name), Q_FUNC_INFO);
-
         m_settings->setValue(name, address);
 
+        for (const auto &device : m_discoveryAgent->discoveredDevices()) {
+            if (device.address().toString() != address) {
+                continue;
+            }
+
+            if (m_localDevice.pairingStatus(device.address()) != QBluetoothLocalDevice::Paired) {
+                auto message = tr("Bluetooth device: %1 - %2 is not paired. It's a good idea to have it paired."
+                                  "\n"
+                                  "Would you like to pair it?").arg(address, name);
+
+                auto reply = QMessageBox::question(nullptr, tr("Not Paired Device"), message);
+                if (reply != QMessageBox::Yes) {
+                    continue;
+                }
+
+                m_localDevice.requestPairing(device.address(), QBluetoothLocalDevice::Paired);
+            }
+        }
     }
 
     if (m_settings->allKeys().isEmpty()) {
         auto reply = QMessageBox::question(nullptr,
                                            tr("Warning"),
-                                           tr("You haven't added any device to the trusted list.\n"
+                                           tr("You haven't added any device to the trusted list."
+                                              "\n"
                                               "Would you like to scan for devices again?"));
         if (reply == QMessageBox::Yes) {
             startDiscovery();
@@ -144,7 +184,8 @@ void Listener::discoverDevicesTimeout()
 
         QMessageBox::information(nullptr,
                                  tr("Information"),
-                                 tr("No looking for trusted devices because there isn't any.\n"
+                                 tr("No looking for trusted devices because there isn't any."
+                                    "\n"
                                     "You can scan for devices again at any time by calling another instance "
                                     "of this program with --scan-again without closing this one.")
                                  );

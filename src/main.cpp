@@ -162,7 +162,10 @@ QList<QCommandLineOption> commandLineOptions(const char *name)
 /* Sets language or leave English as default. */
 QTranslator *setAppLanguage(std::map<QString, Logger::TYPE> &logMessages, const QString &language)
 {
-    logMessages[QObject::tr("Trying to set program language to: %1...").arg(language)] = Logger::INFO;
+    if (not language.isEmpty()) {
+        logMessages[QObject::tr("Trying to set program language to: %1...").arg(language)] = Logger::INFO;
+    }
+
     QTranslator *translator = new QTranslator();
     if (language.isEmpty()) {
         const QStringList uiLanguages = QLocale::system().uiLanguages();

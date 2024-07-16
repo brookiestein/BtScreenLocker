@@ -1,6 +1,8 @@
 #include "devicechooser.hpp"
 #include "ui_devicechooser.h"
 
+#include <QMessageBox>
+
 DeviceChooser::DeviceChooser(QWidget *parent)
     : QWidget(parent)
     , m_ui(new Ui::DeviceChooser)
@@ -28,6 +30,7 @@ void DeviceChooser::closeEvent(QCloseEvent *event)
 void DeviceChooser::showEvent(QShowEvent *event)
 {
     m_ui->tableWidget->resizeColumnsToContents();
+    m_ui->tableWidget->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
     QWidget::showEvent(event);
 }
 
@@ -53,6 +56,13 @@ void DeviceChooser::onCellDoubleClicked(int row, int column)
 
 void DeviceChooser::onAddButtonClicked()
 {
+    if (m_ui->tableWidget->selectedItems().isEmpty()) {
+        QMessageBox::warning(this,
+                             tr("Nothing Selected"),
+                             tr("Please select at least one device to add it to the trusted list."));
+        return;
+    }
+
     for (const auto *item : m_ui->tableWidget->selectedItems()) {
         int row = m_ui->tableWidget->row(item);
         auto name = m_ui->tableWidget->item(row, 0)->text();
