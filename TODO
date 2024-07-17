@@ -1,0 +1,3 @@
+Make a fallback method of just scanning nearby Bluetooth devices because if a trusted device is already
+connected to anything else, it'll refuse the connection with us, making a false positive, i.e, will lock
+our session even when that/those trusted device(s) are near.
