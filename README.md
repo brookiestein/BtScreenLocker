@@ -51,9 +51,9 @@ Using BtScreenLocker is pretty easy actually. The first time you run it, it'll s
 
 In the window that just appeared, double click on the device you want to trust and it's going to be saved on the trusted list.
 
-After that, BtScreenLocker will run as a daemon without needing your interaction. Every 30 seconds, it'll scan again to look for that trusted device and if it determines that devices has gone away, it'll lock your screen in order to protect your computer from unauthorized access.
+After that, BtScreenLocker will run as a daemon without needing your interaction. Every 20 seconds, it'll scan again to look for that trusted device and if it determines that devices has gone away, it'll lock your screen in order to protect your computer from unauthorized access.
 
-As soon as you unlock your computer, it's going to start scanning again every 30 seconds.
+As soon as you unlock your computer, it's going to start scanning again every 20 seconds.
 
 If for some reason you want to stop scanning and, in consequence, locking your screen if there aren't any trusted device near just run in a terminal:
 ```

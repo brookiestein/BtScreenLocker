@@ -33,8 +33,8 @@ Listener::Listener(ScreenLocker &screenLocker, QObject *parent)
 
     m_discoveryAgent = QSharedPointer<QBluetoothDeviceDiscoveryAgent>(new QBluetoothDeviceDiscoveryAgent(this));
 
-    m_deviceDiscoverTimer.setInterval(30'000); /* Discover devices for 30 seconds. */
-    m_lookForTrustedDeviceTimer.setInterval(30'000); /* Check if trusted device is near every 10 seconds. */
+    m_deviceDiscoverTimer.setInterval(12'000); /* Discover devices for 12 seconds. */
+    m_lookForTrustedDeviceTimer.setInterval(20'000); /* Check if trusted device is near every 20 seconds. */
 
     auto settingsFile = QString("%1%2%3%4%5.ini")
                         .arg(QStandardPaths::writableLocation(QStandardPaths::ConfigLocation),

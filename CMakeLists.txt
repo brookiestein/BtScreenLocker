@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.28)
 
 project(BtScreenLocker
-    VERSION 1.6.3
+    VERSION 1.6.4
     LANGUAGES CXX
     DESCRIPTION "Daemon to lock your screen if trusted Bluetooth devices go away."
 )

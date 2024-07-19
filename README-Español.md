@@ -51,9 +51,9 @@ Usar BtScreenLocker es bastante sencillo, en realidad. La primera vez que lo cor
 
 En la ventana que apareció, haz doble click en el dispositivo en el que quieres confiar y BtScreenLocker lo guardará en la lista de confianza.
 
-Después de eso, BtScreenLocker correrá como un demonio (del inglés daemon) sin necesidad de interacción contigo. Cada 30 segundos, escaneará de nuevo buscando ese dispositivo de confianza y, si determina que ya no está cerca, bloqueará tu pantalla para proteger tu computadora de acceso no autorizado.
+Después de eso, BtScreenLocker correrá como un demonio (del inglés daemon) sin necesidad de interacción contigo. Cada 20 segundos, escaneará de nuevo buscando ese dispositivo de confianza y, si determina que ya no está cerca, bloqueará tu pantalla para proteger tu computadora de acceso no autorizado.
 
-Tan pronto como desbloquees tu computadora, empezará a escanear de nuevo cada 30 segundos.
+Tan pronto como desbloquees tu computadora, empezará a escanear de nuevo cada 20 segundos.
 
 Si, por alguna razón, quieres detener el escaneo y, en consecuencia, el bloqueo de tu pantalla si ya no hay dispositivos de confianza cerca, corre en una terminal:
 ```
