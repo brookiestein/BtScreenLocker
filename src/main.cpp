@@ -1,3 +1,4 @@
+#include <csignal>
 #include <map>
 
 #include <QApplication>
@@ -11,16 +12,18 @@
 #include <QSharedPointer>
 #include <QStandardPaths>
 #include <QTranslator>
+#include <QVector>
 
 #include "listener.hpp"
 #include "logger.hpp"
 #include "screenlocker.hpp"
 
+void setupSignals(const QVector<int> sigs);
+void signalHandler(int signal);
 QList<QCommandLineOption> commandLineOptions(const char *name);
 QTranslator *setAppLanguage(std::map<QString, Logger::TYPE> &logMessages, const QString &language);
 int enableAutostart(const QCommandLineParser &parser, Logger &logger, const char *name);
 void registerDBusService(Listener &listener, Logger &logger);
-void usage(const char *programName);
 
 int main(int argc, char *argv[])
 {
@@ -28,6 +31,8 @@ int main(int argc, char *argv[])
     QApplication::setApplicationVersion(PROJECT_VERSION);
     QApplication a(argc, argv);
     a.setQuitOnLastWindowClosed(false);
+
+    setupSignals({ SIGINT, SIGHUP, SIGTERM, SIGQUIT });
 
     QCommandLineParser parser;
     parser.setApplicationDescription(PROJECT_DESCRIPTION);
@@ -109,6 +114,19 @@ int main(int argc, char *argv[])
     registerDBusService(listener, logger);
 
     return a.exec();
+}
+
+void setupSignals(const QVector<int> sigs)
+{
+    for (const int sig : sigs) {
+        signal(sig, signalHandler);
+    }
+}
+
+void signalHandler(int signal)
+{
+    qInfo() << "Exiting because of signal:" << signal;
+    QApplication::exit(signal);
 }
 
 QList<QCommandLineOption> commandLineOptions(const char *name)
