@@ -8,6 +8,7 @@
 #include <QDebug>
 #include <QDir>
 #include <QFile>
+#include <QMessageBox>
 #include <QLocale>
 #include <QSharedPointer>
 #include <QStandardPaths>
@@ -96,8 +97,25 @@ int main(int argc, char *argv[])
         return enableAutostart(parser, logger, argv[0]);
     }
 
+    QString timeToRestart = parser.value("time-to-restart");
+    bool autorestart = parser.isSet("auto-restart");
+    bool ok {false};
+    int seconds = timeToRestart.toInt(&ok);
+
+    if (autorestart) {
+        if (not timeToRestart.isEmpty() and not ok) {
+            auto message = QObject::tr("%1 is not a valid value for 'seconds'.").arg(timeToRestart);
+            QMessageBox::critical(nullptr, QObject::tr("Error"), message);
+            logger.log(message, Q_FUNC_INFO, Logger::TYPE::FATAL);
+        }
+
+        if (timeToRestart.isEmpty()) {
+            seconds = 10; /* Default to 10 seconds if user didn't provide it. */
+        }
+    }
+
     ScreenLocker locker;
-    Listener listener(locker);
+    Listener listener(locker, autorestart, seconds);
     a.connect(&listener, &Listener::lockScreen, &locker, &ScreenLocker::lockScreen);
     a.connect(&listener, &Listener::quit, &a, &QApplication::quit);
     /* When screen is locked, no scan is done.
@@ -132,6 +150,12 @@ void signalHandler(int signal)
 QList<QCommandLineOption> commandLineOptions(const char *name)
 {
     QList<QCommandLineOption> options;
+
+    options.append(QCommandLineOption(QStringList() << "A" << "auto-restart",
+        QObject::tr("Allow %1 to restart itself when your Bluetooth device "
+                    "becomes unavailable and availabe again, e.g. when your machine suspends. "
+                    "Default is 10 seconds.").arg(name))
+    );
 
     options.append(QCommandLineOption(QStringList() << "a" << "autostart",
         QObject::tr("Register %1 to automatically start on boot.\n"
@@ -168,6 +192,11 @@ QList<QCommandLineOption> commandLineOptions(const char *name)
 
     options.append(QCommandLineOption(QStringList() << "s" << "scan-again",
         QObject::tr("Same as --discover, but for an already running %1 instance.").arg(name))
+    );
+
+    options.append(QCommandLineOption(QStringList() << "t" << "time-to-restart",
+        QObject::tr("Time to wait before auto-restarting %1. (Only useful when combined with -A)").arg(name),
+        "seconds")
     );
 
     options.append(QCommandLineOption(QStringList() << "V" << "verbose",
@@ -221,6 +250,14 @@ int enableAutostart(const QCommandLineParser &parser, Logger &logger, const char
     }
 
     QStringList args;
+    if (parser.isSet("auto-restart")) {
+        args << "-A";
+    }
+
+    if (parser.isSet("time-to-restart")) {
+        args << "-t" << parser.value("time-to-restart");
+    }
+
     if (parser.isSet("debug")) {
         args << "-D";
     }

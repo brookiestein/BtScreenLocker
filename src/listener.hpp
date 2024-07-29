@@ -29,10 +29,13 @@ class Listener : public QObject
     ScreenLocker &m_screenLocker;
     Logger &m_logger;
     bool m_stopped;
+    bool m_restarting;
+    bool m_autorestart;
+    int m_seconds;
 
-    QString deviceClassToString(const QBluetoothDeviceInfo &deviceInfo);
+    void restart();
 public:
-    explicit Listener(ScreenLocker &locker, QObject *parent = nullptr);
+    explicit Listener(ScreenLocker &locker, bool autorestart = false, int seconds = -1, QObject *parent = nullptr);
     ~Listener();
     void start();
     void startDiscovery();

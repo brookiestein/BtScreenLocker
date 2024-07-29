@@ -195,7 +195,7 @@ Puede estar lejos o tener el Bluetooth desactivado.</translation>
 Ending program execution because of this!
 
 If at some point the device: %3 becomes available again, please re-run me.</source>
-        <translation>El dispositivo Bluetooth: %1, %2 ya no está disponible.
+        <translation type="vanished">El dispositivo Bluetooth: %1, %2 ya no está disponible.
 ¡Terminando ejecución del programa!
 
 Si en algún momento el dispositivo: %3 vuelve a estar disponible, por favor ejecútame de nuevo.</translation>
@@ -299,6 +299,30 @@ Puedes escanear los dispositivos de nuevo en cualquier momento ejecutando otra i
 Would you like to pair it?</source>
         <translation>El dispositivo Bluetooth: %1 - %2 no está emparejado. Es una buena idea tenerlo emparejado.
 ¿Te gustaría emparejarlo?</translation>
+    </message>
+    <message>
+        <source>Restarting in %1 seconds to be able to use Bluetooth adapter again.</source>
+        <translation>Reiniciando en %1 segundos para ser capaz de usar el adaptador Bluetooth de nuevo.</translation>
+    </message>
+    <message>
+        <source>Bluetooth device: %1, %2 became unavailable. </source>
+        <translation>El dispositivo Bluetooth %1, %2 dejó de estar disponible. </translation>
+    </message>
+    <message>
+        <source>Restarting in %1 seconds.</source>
+        <translation>Reiniciando en %1 segundos.</translation>
+    </message>
+    <message>
+        <source>Ending program execution because of this!
+
+If at some point the device: %3 becomes available again, please re-run me.</source>
+        <translation>¡Finalizando la ejecución del programa por esto!
+
+Si en algún momento el dispositivo: %3 vuelve a estar disponible de nuevo, por favor ejecútame de nuevo.</translation>
+    </message>
+    <message>
+        <source> Restarting in %1 seconds.</source>
+        <translation> Reiniciando en %1 segundos.</translation>
     </message>
 </context>
 <context>
@@ -422,6 +446,22 @@ Error: %1</translation>
 Error message: %1</source>
         <translation>No se pudo registrar el servicio D-BUS. No será posible responder a mensajes IPC.
 Mensaje de error: %1</translation>
+    </message>
+    <message>
+        <source>Time to wait before auto-restarting %1. (Only useful when combined with -A)</source>
+        <translation>Tiempo para esperar antes de reiniciar %1 automáticamente. (Útil únicamente cuando está combinado con -A)</translation>
+    </message>
+    <message>
+        <source>%1 is not a valid value for &apos;seconds&apos;.</source>
+        <translation>%1 no es un valor válido para &apos;segundos&apos;.</translation>
+    </message>
+    <message>
+        <source>Error</source>
+        <translation>Error</translation>
+    </message>
+    <message>
+        <source>Allow %1 to restart itself when your Bluetooth device becomes unavailable and availabe again, e.g. when your machine suspends. Default is 10 seconds.</source>
+        <translation>Permitir que %1 se reinicie cuando tu dispositivo Bluetooth se vuelve inaccesible and vuelve a estar disponible de nuevo, por ejemplo, cuando tu computadora se suspende. 10 segundos por defecto.</translation>
     </message>
 </context>
 <context>

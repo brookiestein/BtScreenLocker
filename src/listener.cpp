@@ -1,11 +1,13 @@
 #include "listener.hpp"
 
+#include <QApplication>
 #include <QBluetoothDeviceDiscoveryAgent>
 #include <QBluetoothSocket>
 #include <QDebug>
 #include <QDir>
 #include <QEventLoop>
 #include <QMessageBox>
+#include <QProcess>
 #include <QSettings>
 #include <QStandardPaths>
 
@@ -13,20 +15,28 @@
 #include "devicechooser.hpp"
 #include "logger.hpp"
 
-Listener::Listener(ScreenLocker &screenLocker, QObject *parent)
+Listener::Listener(ScreenLocker &screenLocker, bool autorestart, int seconds, QObject *parent)
     : QObject{parent}
     , m_dbusConnection(QDBusConnection::sessionBus())
     , m_screenLocker(screenLocker)
+    , m_restarting(false)
+    , m_autorestart(autorestart)
+    , m_seconds(seconds)
     , m_logger(Logger::instance())
     , m_stopped(false)
 {
-
     if (not m_localDevice.isValid()) {
         auto message = tr("There isn't a valid Bluetooth device on this machine. Can't do anything.");
-        QMessageBox::critical(nullptr,
-                              tr("Error"),
-                              message);
-        m_logger.log(message, Q_FUNC_INFO, Logger::FATAL);
+
+        if (not m_autorestart) {
+            QMessageBox::critical(nullptr, tr("Error"), message);
+            m_logger.log(message, Q_FUNC_INFO, Logger::FATAL);
+        }
+
+        message += tr(" Restarting in %1 seconds.").arg(QString::number(m_seconds));
+        QMessageBox::warning(nullptr, tr("Warning"), message);
+        m_logger.log(message, Q_FUNC_INFO);
+        restart();
     } else {
         m_localDevice.powerOn();
     }
@@ -81,6 +91,10 @@ Listener::~Listener()
 
 void Listener::start()
 {
+    if (m_restarting) {
+        return;
+    }
+
     if (m_settings->allKeys().isEmpty()) {
         startDiscovery();
         return;
@@ -99,6 +113,10 @@ void Listener::start()
 
 void Listener::startDiscovery()
 {
+    if (m_restarting) {
+        return;
+    }
+
     /* If constructor started it, but in main.cpp user started discovery. */
     m_lookForTrustedDeviceTimer.stop();
     m_logger.log(tr("Discoverying devices..."), Q_FUNC_INFO);
@@ -110,18 +128,46 @@ void Listener::startDiscovery()
                              tr("Please wait up to 30 seconds, I'll show you the devices I discover."));
 }
 
+void Listener::restart()
+{
+    m_restarting = true;
+    m_deviceDiscoverTimer.stop();
+    m_lookForTrustedDeviceTimer.stop();
+
+    QTimer::singleShot(m_seconds * 1'000, [] () {
+        auto *app = QApplication::instance();
+        app->quit();
+        QProcess::startDetached(app->arguments()[0], app->arguments().mid(1));
+    });
+}
+
 void Listener::hostModeStateChanged(QBluetoothLocalDevice::HostMode state)
 {
     if (state == QBluetoothLocalDevice::HostPoweredOff) {
         m_lookForTrustedDeviceTimer.stop();
         m_deviceDiscoverTimer.stop();
-        auto message = tr("Bluetooth device: %1, %2 became unavailable.\n"
-                          "Ending program execution because of this!\n\n"
+
+        auto message = tr("Bluetooth device: %1, %2 became unavailable. ")
+                           .arg(m_localDevice.address().toString(), m_localDevice.name());
+
+        if (m_autorestart) {
+            message += tr("Restarting in %1 seconds.").arg(QString::number(m_seconds));
+        } else {
+            message += tr("Ending program execution because of this!\n\n"
                           "If at some point the device: %3 becomes available again, please re-run me.")
-                           .arg(m_localDevice.name(), m_localDevice.address().toString(), m_localDevice.name());
+                           .arg(m_localDevice.address().toString());
+        }
+
         QMessageBox::critical(nullptr, tr("Error"), message);
         m_logger.log(message, Q_FUNC_INFO, Logger::ERROR);
-        emit quit();
+        if (not m_autorestart) {
+            emit quit();
+            return;
+        }
+
+        m_logger.log(tr("Restarting in %1 seconds to be able to use Bluetooth adapter again.")
+                         .arg(QString::number(m_seconds)));
+        restart();
     }
 }
 
