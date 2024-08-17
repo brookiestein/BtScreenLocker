@@ -117,11 +117,21 @@ int main(int argc, char *argv[])
     ScreenLocker locker;
     Listener listener(locker, autorestart, seconds);
     a.connect(&listener, &Listener::lockScreen, &locker, &ScreenLocker::lockScreen);
-    a.connect(&listener, &Listener::quit, &a, &QApplication::quit);
+    a.connect(&listener, &Listener::quit, &a, &QApplication::quit, Qt::QueuedConnection);
     /* When screen is locked, no scan is done.
      * Connect to this signal to start scanning when screen is unlocked again.
      */
     a.connect(&locker, &ScreenLocker::activeChanged, &listener, &Listener::activeChanged);
+
+    if (parser.isSet("list-devices")) {
+        listener.listDevices();
+        a.quit();
+    }
+
+    if (parser.isSet("remove-device")) {
+        listener.removeDevice(parser.value("remove-device"));
+        a.quit();
+    }
 
     if (parser.isSet("discover")) {
         listener.startDiscovery();
@@ -182,9 +192,15 @@ QList<QCommandLineOption> commandLineOptions(const char *name)
         QObject::tr("Set language. (Available: English (default), and Spanish"), "language")
     );
 
+    options.append(QCommandLineOption(QStringList() << "L" << "list-devices",
+        QObject::tr("List trusted devices.")));
+
     options.append(QCommandLineOption(QStringList() << "p" << "pause",
         QObject::tr("Pause an already running %1 instance.").arg(name))
     );
+
+    options.append(QCommandLineOption(QStringList() << "R" << "remove-device",
+        QObject::tr("Remove #th trusted device. Use -L to see all trusted devices."), "#"));
 
     options.append(QCommandLineOption(QStringList() << "r" << "resume",
         QObject::tr("Resume an already running and paused %1 instance.").arg(name))

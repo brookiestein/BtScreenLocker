@@ -324,6 +324,18 @@ Si en algún momento el dispositivo: %3 vuelve a estar disponible de nuevo, por 
         <source> Restarting in %1 seconds.</source>
         <translation> Reiniciando en %1 segundos.</translation>
     </message>
+    <message>
+        <source>Device &apos;%1&apos; doesn&apos;t exist in the trusted devices list.</source>
+        <translation>El dispositivo &apos;%1&apos; no existe en la lista de dispositivos de confianza.</translation>
+    </message>
+    <message>
+        <source>Device &apos;%1&apos; is not a trusted device anymore.</source>
+        <translation>El dispositivo &apos;%1&apos; ya no es un dispositivo de confianza.</translation>
+    </message>
+    <message>
+        <source>Device #%1 doesn&apos;t exist in the trusted devices list.</source>
+        <translation>El dispositivo #%1 no existe en la lista de dispositivos de confianza.</translation>
+    </message>
 </context>
 <context>
     <name>QObject</name>
@@ -462,6 +474,14 @@ Mensaje de error: %1</translation>
     <message>
         <source>Allow %1 to restart itself when your Bluetooth device becomes unavailable and availabe again, e.g. when your machine suspends. Default is 10 seconds.</source>
         <translation>Permitir que %1 se reinicie cuando tu dispositivo Bluetooth se vuelve inaccesible and vuelve a estar disponible de nuevo, por ejemplo, cuando tu computadora se suspende. 10 segundos por defecto.</translation>
+    </message>
+    <message>
+        <source>List trusted devices.</source>
+        <translation>Enlistar dispositivos de confianza.</translation>
+    </message>
+    <message>
+        <source>Remove #th trusted device. Use -L to see all trusted devices.</source>
+        <translation>Eliminar el dispositivo de confianza #x. Usa -L para ver todos los dispositivos de confianza.</translation>
     </message>
 </context>
 <context>

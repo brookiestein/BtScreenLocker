@@ -89,6 +89,46 @@ Listener::~Listener()
     m_settings->endGroup();
 }
 
+void Listener::listDevices()
+{
+    qInfo().nospace() << '\n' << "These are all trusted devices:";
+    int i {1};
+    for (const auto &device : m_settings->allKeys()) {
+        qInfo().noquote().nospace() << i++ << ". " << device;
+    }
+    qInfo();
+}
+
+void Listener::removeDevice(QString device)
+{
+    bool ok {false};
+    int deviceNumber = device.toInt(&ok);
+    if (ok) {
+        if (deviceNumber <= 0 or deviceNumber > m_settings->allKeys().size()) {
+            m_logger.log(
+                tr("Device #%1 doesn't exist in the trusted devices list.").arg(QString::number(deviceNumber)),
+                Q_FUNC_INFO, Logger::FATAL
+            );
+        }
+
+        device = m_settings->allKeys()[deviceNumber - 1];
+        goto success;
+    }
+
+    /* Alternatively user can remove a device by its fullname. */
+    if (not m_settings->allKeys().contains(device)) {
+        m_logger.log(
+            tr("Device '%1' doesn't exist in the trusted devices list.").arg(device),
+            Q_FUNC_INFO,
+            Logger::FATAL
+        );
+    }
+
+success:
+    m_settings->remove(device);
+    m_logger.log(tr("Device '%1' is not a trusted device anymore.").arg(device), Q_FUNC_INFO);
+}
+
 void Listener::start()
 {
     if (m_restarting) {

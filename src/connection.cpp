@@ -22,10 +22,12 @@ void Connection::connect()
 {
     const unsigned int length = 18; /* MAC Addresses are 17 characters long */
     QSharedPointer<char> address(new char[length]);
-    struct sockaddr_rc target = {
-        .rc_family = AF_BLUETOOTH,
-        .rc_channel = 2
-    };
+
+    struct sockaddr_rc target = {0};
+    std::memset(&target, 0, sizeof(target));
+
+    target.rc_family = AF_BLUETOOTH;
+    target.rc_channel = 2;
 
     /* Try to connect to every single trusted device until one gets connected. */
     for (const auto &device : m_trustedDevices) {
@@ -53,18 +55,20 @@ void Connection::connect()
         }
 
         int status = ::connect(sock, (struct sockaddr *) &target, sizeof(target));
-        if (status == 0) {
+        if (status < 0) {
+            m_logger.log(
+                tr("Couldn't connect to Bluetooth device: %1 - %2.\n"
+                   "It may be far or has Bluetooth disabled.").arg(address.data(), name),
+                Q_FUNC_INFO, Logger::WARNING
+            );
+
             close(sock);
-            m_logger.log(tr("Connected to Bluetooth device: %1 - %2!").arg(address.data(), name), Q_FUNC_INFO);
-            m_connectedDevices.push_back(device);
             continue;
         }
 
-        m_logger.log(
-            tr("Couldn't connect to Bluetooth device: %1 - %2.\n"
-               "It may be far or has Bluetooth disabled.").arg(address.data(), name),
-            Q_FUNC_INFO, Logger::WARNING
-        );
+        close(sock);
+        m_logger.log(tr("Connected to Bluetooth device: %1 - %2!").arg(address.data(), name), Q_FUNC_INFO);
+        m_connectedDevices.push_back(device);
     }
 }
 

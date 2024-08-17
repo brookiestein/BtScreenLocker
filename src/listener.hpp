@@ -37,6 +37,8 @@ class Listener : public QObject
 public:
     explicit Listener(ScreenLocker &locker, bool autorestart = false, int seconds = -1, QObject *parent = nullptr);
     ~Listener();
+    void listDevices();
+    void removeDevice(QString device);
     void start();
     void startDiscovery();
 signals:
