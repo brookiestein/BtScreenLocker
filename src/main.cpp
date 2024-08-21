@@ -125,12 +125,12 @@ int main(int argc, char *argv[])
 
     if (parser.isSet("list-devices")) {
         listener.listDevices();
-        a.quit();
+        return 0;
     }
 
     if (parser.isSet("remove-device")) {
         listener.removeDevice(parser.value("remove-device"));
-        a.quit();
+        return 0;
     }
 
     if (parser.isSet("discover")) {
