@@ -84,18 +84,39 @@ That will tell the already-running BtScreenLocker instance to stop scanning for 
 
 Both if you added a new Bluetooth device to the trusted list as if you didn't, BtScreenLocker will start scanning for the trusted devices you had before (including the possibly added new one).
 
+# Taking in Account
+If you run `BtScreenLocker` from your terminal, you'd probably see a message like:
+```
+qt.bluetooth.bluez: Missing CAP_NET_ADMIN permission. Cannot determine whether a found address is of random or public type.
+```
+This is because your user (normally no user, but the root user, has this permission) doesn't have that permission. `BtScreenLocker` will work without any issue even with this warning.
+
+However, if you don't want to see it every single time you run `BtScreenLocker`, you can give it the `CAP_NET_ADMIN` permission by running:
+```
+sudo setcap 'cap_net_admin+eip' /usr/bin/BtScreenLocker
+```
+With this command you're giving `BtScreenLocker` the capability to capture packages from the network.
+
+**BtScreenLocker just uses Bluetooth, no Internet. It doesn't even need that capability, it's just to 'supress' it from your terminal.**
+
 # Cheat Sheet
-| Long Option  | Short Option  | Description                                                                 |
-|--------------|---------------|-----------------------------------------------------------------------------|
-| --autostart  | -a            | Register BtScreenLocker to automatically start on boot. (with passed args)  |
-| --debug      | -D            | Enable debug log (implicitly enables verbose mode).                         |
-| --discover   | -d            | Discover new Bluetooth devices in order to add them to the trusted list.    |
-| --filename   | -f            | Where to save log (always verbose, debug depends on --debug).               |
-| --help       | -h            | Show this help.                                                             |
-| --kill       | -k            | End an existing BtScreenLocker instance.                                    |
-| --language   | -l            | Set language. (Available: English (default), and Spanish).                  |
-| --pause      | -p            | Pause an already running BtScreenLocker instance.                           |
-| --resume     | -r            | Resume an already running and paused BtScreenLocker instance.               |
-| --scan-again | -s            | Same as --discover, but for an already running BtScreenLocker instance.     |
-| --verbose    | -V            | Enable verbose log.                                                         |
-| --version    | -v            | Show this program version.                                                  |
+| Long Option        | Short Option  | Description                                                                              |
+|--------------------|---------------|------------------------------------------------------------------------------------------|
+| --auto-restart     | -A            | Allow BtScreenLocker to restart itself when your Bluetooth device becomes                |
+|                    |               | unavailable and availabe again, e.g. when your machine suspends.                         |
+|                    |               | Default is 10 seconds.                                                                   |
+| --autostart        | -a            | Register BtScreenLocker to automatically start on boot. (with passed args)               |
+| --debug            | -D            | Enable debug log (implicitly enables verbose mode).                                      |
+| --discover         | -d            | Discover new Bluetooth devices in order to add them to the trusted list.                 |
+| --filename         | -f            | Where to save log (always verbose, debug depends on --debug).                            |
+| --help             | -h            | Show this help.                                                                          |
+| --kill             | -k            | End an existing BtScreenLocker instance.                                                 |
+| --language         | -l            | Set language. (Available: English (default), and Spanish).                               |
+| --list-devices     | -L            | List trusted devices.                                                                    |
+| --pause            | -p            | Pause an already running BtScreenLocker instance.                                        |
+| --resume           | -r            | Resume an already running and paused BtScreenLocker instance.                            |
+| --remove-device    | -R            | Remove #th trusted device. Use -L to see all trusted devices.                            |
+| --scan-again       | -s            | Same as --discover, but for an already running BtScreenLocker instance.                  |
+| --time-to-restart  | -t            | Time to wait before auto-restarting BtScreenLocker. (Only useful when combined with -A)  |
+| --verbose          | -V            | Enable verbose log.                                                                      |
+| --version          | -v            | Show this program version.                                                               |
